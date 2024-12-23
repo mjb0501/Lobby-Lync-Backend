@@ -22,3 +22,5 @@ sequelize.sync().then(() => {
         await testDatabaseConnection();
     });
 });
+
+export default app;
