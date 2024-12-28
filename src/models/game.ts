@@ -1,7 +1,11 @@
-import { DataTypes, Model } from 'sequelize';
+import { DataTypes, Model, InferAttributes, InferCreationAttributes, CreationOptional } from "sequelize";
 import sequelize from '../configs/database';
+import Post from './post';
 
-class Game extends Model {}
+class Game extends Model<InferAttributes<Game>, InferCreationAttributes<Game>> {
+  declare id: CreationOptional<number>;
+  declare name: string;
+}
 
 Game.init({
   id: {
@@ -20,5 +24,7 @@ Game.init({
   modelName: 'game',
   tableName: 'game'
 });
+
+//Game.hasMany(Post, { foreignKey: 'gameId' });
 
 export default Game;
