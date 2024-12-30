@@ -3,7 +3,6 @@ import Post from '../models/post';
 import User from '../models/user';
 import Platform from '../models/platform';
 import Game from '../models/game';
-import PostPlatform from '../models/post_platforms';
 
 export const createPost = async (req: Request, res: Response): Promise<void> => {
     try 
