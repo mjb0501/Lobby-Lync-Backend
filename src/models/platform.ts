@@ -1,6 +1,7 @@
 import { DataTypes, Model, InferAttributes, InferCreationAttributes, CreationOptional } from "sequelize";
 import sequelize from '../configs/database';
 import Post from './post';
+import PostPlatform from "./post_platforms";
 
 class Platform extends Model<InferAttributes<Platform>, InferCreationAttributes<Platform>> {
   declare id: CreationOptional<number>;
@@ -24,7 +25,5 @@ Platform.init({
     modelName: 'platform',
     tableName: 'platform'
 });
-
-//Platform.hasMany(Post, { foreignKey: 'platformId' });
 
 export default Platform;
