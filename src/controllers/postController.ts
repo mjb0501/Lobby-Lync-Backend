@@ -43,26 +43,35 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
 export const getPosts = async (req: Request, res: Response) => {
     try 
     {
+        //allows the user to filter by gameName and platformName
+        const { gameName, platformName } = req.query;
+
+        const whereConditions: any = {};
+        const includeConditions: any[] = [
+            {
+                model: User,
+                attributes: ['id', 'username'],
+                as: 'User'
+            },
+            {
+                model: Platform,
+                attributes: ['id', 'name'],
+                as: 'Platforms',
+                through: { attributes: [] },
+                ...(platformName && { where: { name: platformName } }),
+            },
+            {
+                model: Game,
+                attributes: ['id', 'name'],
+                as: 'Game',
+                ...(gameName && { where: { name: gameName } }),
+            }
+        ]
+
         //try and grab all posts ordered by createdAt from most recent to least
         const posts = await Post.findAll({
-            include: [
-                {
-                    model: User,
-                    attributes: ['id', 'username'],
-                    as: 'User'
-                },
-                {
-                    model: Platform,
-                    attributes: ['id', 'name'],
-                    as: 'Platforms',
-                    through: { attributes: [] },
-                },
-                {
-                    model: Game,
-                    attributes: ['id', 'name'],
-                    as: 'Game'
-                }
-            ],
+            where: whereConditions,
+            include: includeConditions,
             order: [['createdAt', 'DESC']],
         });
 
