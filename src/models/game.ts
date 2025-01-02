@@ -1,9 +1,16 @@
-import { DataTypes, Model, InferAttributes, InferCreationAttributes, CreationOptional } from "sequelize";
+import { DataTypes, Model, InferAttributes, InferCreationAttributes, CreationOptional, NonAttribute, Association } from "sequelize";
 import sequelize from '../configs/database';
+import Platform from './platform'
 
-class Game extends Model<InferAttributes<Game>, InferCreationAttributes<Game>> {
+class Game extends Model<InferAttributes<Game, { omit: 'platforms' }>, InferCreationAttributes<Game, { omit: 'platforms' }>> {
   declare id: CreationOptional<number>;
   declare name: string;
+
+  declare platforms?: NonAttribute<Platform[]>;
+
+  declare static associations: {
+    platforms: Association<Game, Platform>;
+  };
 }
 
 Game.init({

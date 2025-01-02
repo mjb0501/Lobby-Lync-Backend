@@ -1,7 +1,12 @@
-import { DataTypes, Model } from 'sequelize';
+import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from 'sequelize';
 import sequelize from '../configs/database';
+import Game from './game';
 
-class GamePlatform extends Model {}
+class GamePlatform extends Model<InferAttributes<GamePlatform>, InferCreationAttributes<GamePlatform>> {
+  declare id: CreationOptional<number>;
+  declare gameId: number;
+  declare platformId: number;
+}
 
 GamePlatform.init({
   id: {
@@ -39,3 +44,5 @@ GamePlatform.init({
     },
   ],
 });
+
+export default GamePlatform

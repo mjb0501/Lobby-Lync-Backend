@@ -6,6 +6,7 @@ import {
   CreationOptional,
   BelongsToManyAddAssociationsMixin,
   NonAttribute,
+  Association,
  } from 'sequelize';
 import sequelize from '../configs/database';
 import User from './user';
@@ -25,8 +26,15 @@ class Post extends Model<InferAttributes<Post>, InferCreationAttributes<Post>> {
 
   //Nonattribute marks properties that are not a part of the database but are added tyrough association
   declare User?: NonAttribute<User>;
-  declare Platforms?: NonAttribute<Platform[]>;
+  declare platforms?: NonAttribute<Platform[]>;
   declare Game?: NonAttribute<Game>;
+
+  //declarations of the associations for typescript to work effectively
+  declare static associations: {
+    User: Association<Post, User>;
+    platforms: Association<Post, Platform>
+    Game: Association<Post, Game>;
+  };
 }
 
 Post.init({
