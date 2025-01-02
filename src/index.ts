@@ -8,6 +8,7 @@ import gameRoutes from './routes/gameRoutes';
 import sequelize from './configs/database';
 import { testDatabaseConnection } from './configs/database';
 import defineAssociations from './models/modelAssociations';
+import startPostCleanupJob from './services/postCleanupService';
 
 dotenv.config();
 
@@ -20,6 +21,8 @@ app.use('/posts', postRoutes);
 app.use('/games', gameRoutes);
 
 defineAssociations();
+
+startPostCleanupJob();
 
 sequelize.sync({ alter: true }).then(() => {
     app.listen(process.env.PORT || 3000, async () => { 
