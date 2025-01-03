@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/user';
+import { generateToken } from "../services/authService";
 
 export const register = async (req: Request, res: Response): Promise<void> => {
     try 
@@ -34,11 +35,33 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             res.status(401).json({ error: 'Invalid credentials' });
             return;
         }
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET!, { expiresIn: '1h' });
-        res.status(200).json({ token });
+
+        const token = generateToken(user.id);
+
+        res.cookie('accessToken', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            maxAge: 2 * 60 * 60 * 1000,
+        });
+
+
+
+        // const token = jwt.sign(
+        //     { id: user.id }, 
+        //     process.env.JWT_SECRET!, 
+        //     { expiresIn: '1h' }
+        // );
+        res.status(200).json({ message: 'Login successful' });
     } 
     catch (err) 
     {
         res.status(500).json({ error: 'Error logging in' });
     }
 };
+
+export const authLogout = (req: Request, res: Response): void => {
+    res.clearCookie('accessToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+
+    res.status(200).json({ message: 'Successfully logged out' });
+}

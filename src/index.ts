@@ -1,20 +1,27 @@
 import express, { application } from 'express';
 import dotenv from 'dotenv';
-import bodyParser from 'body-parser';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes';
 import postRoutes from './routes/postRoutes';
 import gameRoutes from './routes/gameRoutes';
 import sequelize from './configs/database';
 import { testDatabaseConnection } from './configs/database';
 import defineAssociations from './models/modelAssociations';
-import startPostCleanupJob from './services/postCleanupService';
+import { startPostCleanupJob, stopPostCleanupJob} from './services/postCleanupService';
 
 dotenv.config();
 
+const corsOptions = {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+}
+
 const app = express();
-app.use(bodyParser.json());
-app.use(cors());
+app.use(express.json());
+app.use(cookieParser());
+app.use(cors(corsOptions));
 
 app.use('/auth', authRoutes);
 app.use('/posts', postRoutes);
@@ -24,11 +31,29 @@ defineAssociations();
 
 startPostCleanupJob();
 
-sequelize.sync({ alter: true }).then(() => {
-    app.listen(process.env.PORT || 3000, async () => { 
+sequelize.sync({}).then(() => {
+    const server = app.listen(process.env.PORT || 3000, async () => { 
         console.log('Server running')
         await testDatabaseConnection();
     });
+
+    const shutDownHandler = async () => {
+        console.log('Gracefully shutting down...');
+        stopPostCleanupJob();
+
+        server.close(() => {
+            console.log('Server closed.');
+            process.exit(0);
+        });
+
+        setTimeout(() => {
+            console.error('Forcing server shutdown...');
+            process.exit(1);
+        }, 10000);
+    };
+
+    process.on('SIGINT', shutDownHandler);
+    process.on('SIGTERM', shutDownHandler);
 });
 
 export default app;

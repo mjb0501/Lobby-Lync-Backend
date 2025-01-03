@@ -7,9 +7,15 @@ import Game from '../models/game';
 export const createPost = async (req: Request, res: Response): Promise<void> => {
     try 
     {
-        const { platformIds, gameId, description } = req.body;
-        //req has to be case as any since user is not explicitly defined in type for req
-        const userId = (req as any).user.id;
+
+        if (!req.userId) {
+            res.status(400).json({ error: 'User is not authenticated' });
+            return;
+        }
+
+        const { platformIds, gameId, description } = req.body;    
+
+        const userId = req.userId;
 
         const post = await Post.create({ userId, gameId, description });
 
