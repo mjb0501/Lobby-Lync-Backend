@@ -13,6 +13,7 @@ import { startPostCleanupJob, stopPostCleanupJob} from './services/postCleanupSe
 dotenv.config();
 
 const corsOptions = {
+    //This specifies for cors that the calls will come from localhost...
     origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
