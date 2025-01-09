@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { createPost, readAllPosts } from '../models/post';
 import { createPostPlatform } from '../models/post_platforms';
 import { getPlatformIdByName } from '../models/platform';
+import { createPostAccept } from '../models/post_acceptance';
 
 export const insertPost = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -41,7 +42,13 @@ export const insertPost = async (req: Request, res: Response): Promise<void> => 
 
 export const getPosts = async (req: Request, res: Response): Promise<void> => {
     try {
-        const posts = await readAllPosts();
+        let posts: any;
+        //console.log(req.userId)
+        if (req.userId) {
+            posts = await readAllPosts(req.userId);
+        } else {
+            posts = await readAllPosts();
+        }
 
         const formattedPosts = posts.reduce((acc: any[], row: any) => {
             let post = acc.find(p => p.postId == row.postId);
@@ -71,3 +78,22 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+
+export const acceptPost = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.userId) {
+            res.status(400).json({ error: 'User is not authenticated' });
+            return;
+        }
+
+        const { postId, description } = req.body;
+        const userId = req.userId;
+
+        await createPostAccept({ postId, userId, description });
+
+        res.status(201).json({ message: 'Post accepted successfully' });
+    } catch (error) {
+        console.error('Error accepting post:', error);
+        res.status(500).json({ error: 'Error accepting post' });
+    }
+}

@@ -9,7 +9,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     //header is formatted like: "Bearer <token>" this splits that string and grabs the token.
     //const token = req.headers.authorization?.split(' ')[1];
     const token = req.cookies.accessToken;
-
     if (!token) 
     {
         res.status(401).json({error: 'No token provided', loggedIn: false });
@@ -35,3 +34,23 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
         res.status(401).json({ error: 'Invalid token' });
     }
 }
+
+export const optionalAuthenticate = (req: Request, res: Response, next: NextFunction): void => {
+    const token = req.cookies?.accessToken;
+
+    if (!token) {
+        return next();
+    }
+
+    try {
+        const decoded = jwt.decode(token) as { userId: number } | null;
+
+        if (decoded && decoded.userId) {
+            req.userId = decoded.userId;
+        }
+    } catch (error) {
+        console.error('Error decoding token:', error);
+    }
+
+    next();
+};

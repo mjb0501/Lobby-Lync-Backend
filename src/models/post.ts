@@ -19,18 +19,19 @@ export const createPost = async (post: Post): Promise<Post> => {
   return result.rows[0];
 };
 
-export const readAllPosts = async (): Promise<any[]> => {
+export const readAllPosts = async (userId?: number): Promise<any[]> => {
   const query = `
     SELECT p.id AS "postId", u.username AS user, g.name AS "gameName", p.description, p."createdAt", pl.name AS "platformName"
     FROM post p
 	  LEFT JOIN "user" u ON p."userId" = u.id
     LEFT JOIN game g ON p."gameId" = g.id
     LEFT JOIN post_platform pp ON p.id = pp."postId"
-    LEFT JOIN platform pl ON pp."platformId" = pl.id;
+    LEFT JOIN platform pl ON pp."platformId" = pl.id
+    WHERE ($1::INT IS NULL OR p."userId" != $1);
   `;
 
   try {
-    const result = await pool.query(query);
+    const result = await pool.query(query, [userId || null]);
     return result.rows;
   } catch (error) {
     console.error('Error fetching posts:', error);
