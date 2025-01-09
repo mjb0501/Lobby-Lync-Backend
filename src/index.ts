@@ -5,8 +5,8 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes';
 import postRoutes from './routes/postRoutes';
 import gameRoutes from './routes/gameRoutes';
-import sequelize from './configs/database';
-import { testDatabaseConnection } from './configs/database';
+import sequelize from './config/database';
+import { testDatabaseConnection } from './config/database';
 import defineAssociations from './models/modelAssociations';
 import { startPostCleanupJob, stopPostCleanupJob} from './services/postCleanupService';
 

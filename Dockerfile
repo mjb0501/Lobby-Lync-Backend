@@ -13,6 +13,8 @@ RUN npm install
 #copy the projects files
 COPY . .
 
+RUN apk add --no-cache postgresql-client
+
 RUN npm run build
 
 FROM node:22.12.0-alpine as production
@@ -22,7 +24,11 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/.sequelizerc ./
 COPY --from=builder /app/dist ./dist
+
+
+RUN apk add --no-cache postgresql-client
 
 RUN npm install --production
 
@@ -31,3 +37,4 @@ EXPOSE 3001
 
 #will run the command node index.ts
 CMD ["node", "dist/index.js"]
+#CMD ["sh", "-c", "until pg_isready -h db -p 5432; do echo waiting for db; sleep 2; done && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all && node dist/index.js"]

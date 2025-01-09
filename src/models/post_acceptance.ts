@@ -1,5 +1,5 @@
 import { DataTypes, Model } from 'sequelize';
-import sequelize from '../configs/database';
+import sequelize from '../config/database';
 
 class PostAcceptance extends Model {}
 

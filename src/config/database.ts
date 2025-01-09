@@ -1,14 +1,20 @@
 require('dotenv').config();
 import { Sequelize } from "sequelize";
 
-export const sequelize = new Sequelize(
-    process.env.DB_NAME!,
-    process.env.DB_USER!, 
-    process.env.DB_PASSWORD!, 
+console.log(process.env);  // Log environment variables
+console.log(process.env.DB_HOST, process.env.DB_PORT, process.env.POSTGRES_DB);  // Log specific config values
+
+export const sequelize = new Sequelize(process.env.POSTGRES_DB!, process.env.POSTGRES_USER!, process.env.POSTGRES_PASSWORD!, 
     {
         host: process.env.DB_HOST!,
         port: Number(process.env.DB_PORT),
         dialect: 'postgres',
+        logging: process.env.NODE_ENV === 'development' ? console.log : false,
+        pool: {
+            max: 10, //max # of connections
+            min: 0,
+            idle: 10000, //close idle connections after 10 seconds
+        }
     }
 );
 

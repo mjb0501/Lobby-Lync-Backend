@@ -1,5 +1,5 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from 'sequelize';
-import sequelize from '../configs/database';
+import sequelize from '../config/database';
 import Game from './game';
 
 class GamePlatform extends Model<InferAttributes<GamePlatform>, InferCreationAttributes<GamePlatform>> {

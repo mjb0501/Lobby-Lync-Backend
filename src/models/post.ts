@@ -8,7 +8,7 @@ import {
   NonAttribute,
   Association,
  } from 'sequelize';
-import sequelize from '../configs/database';
+import sequelize from '../config/database';
 import User from './user';
 import PostPlatform from './post_platforms';
 import Platform from './platform';
