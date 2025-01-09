@@ -1,79 +1,54 @@
-import { 
-  DataTypes, 
-  Model, 
-  InferAttributes, 
-  InferCreationAttributes, 
-  CreationOptional,
-  BelongsToManyAddAssociationsMixin,
-  NonAttribute,
-  Association,
- } from 'sequelize';
-import sequelize from '../config/database';
-import User from './user';
-import PostPlatform from './post_platforms';
-import Platform from './platform';
-import Game from './game';
+import pool from '../config/database';
 
-class Post extends Model<InferAttributes<Post>, InferCreationAttributes<Post>> {
-  declare id: CreationOptional<number>;
-  declare userId: number;
-  declare gameId: number;
-  declare description: string;
-  declare createdAt: CreationOptional<Date>;
-
-  //Used to declare the method (This is only necessary if using typescript)
-  declare addPlatforms: BelongsToManyAddAssociationsMixin<Platform, number>;
-
-  //Nonattribute marks properties that are not a part of the database but are added tyrough association
-  declare User?: NonAttribute<User>;
-  declare platforms?: NonAttribute<Platform[]>;
-  declare Game?: NonAttribute<Game>;
-
-  //declarations of the associations for typescript to work effectively
-  declare static associations: {
-    User: Association<Post, User>;
-    platforms: Association<Post, Platform>
-    Game: Association<Post, Game>;
-  };
+export interface Post {
+  id?: number;
+  userId: number;
+  gameId: number;
+  description: string;
+  createdAt?: Date;
 }
 
-Post.init({
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'user',
-      key: 'id',
-    },
-    onDelete: 'CASCADE',
-  },
-  gameId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'game',
-      key: 'id',
-    },
-    onDelete: 'CASCADE',
-  },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  createdAt: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
-}, {
-  sequelize,
-  timestamps: false,
-  modelName: 'post',
-  tableName: 'post',
-});
+export const createPost = async (post: Post): Promise<Post> => {
+  const query = `
+    INSERT INTO post ("userId", "gameId", description, "createdAt")
+    VALUES ($1, $2, $3, NOW())
+    RETURNING id, "userId", "gameId", description, "createdAt";
+  `;
+  const values = [post.userId, post.gameId, post.description];
+  const result = await pool.query(query, values);
+  return result.rows[0];
+};
 
-export default Post;
+export const readAllPosts = async (): Promise<any[]> => {
+  const query = `
+    SELECT p.id AS "postId", u.username AS user, g.name AS "gameName", p.description, p."createdAt", pl.name AS "platformName"
+    FROM post p
+	  LEFT JOIN "user" u ON p."userId" = u.id
+    LEFT JOIN game g ON p."gameId" = g.id
+    LEFT JOIN post_platform pp ON p.id = pp."postId"
+    LEFT JOIN platform pl ON pp."platformId" = pl.id;
+  `;
+
+  try {
+    const result = await pool.query(query);
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    throw new Error('Failed to fetch posts');
+  }
+}
+
+export const deleteOldPosts = async (time: string): Promise<number> => {
+  const query = `
+    DELETE FROM post
+    WHERE "createdAt" < $1
+  `;
+
+  try {
+    const result = await pool.query(query, [time]);
+    return Number(result.rowCount);
+  } catch (error) {
+    console.error('Error deleting old posts:', error);
+    throw new Error('Failed to delete old posts');
+  }
+}

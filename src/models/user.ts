@@ -1,41 +1,30 @@
-import { DataTypes, Model, InferAttributes, InferCreationAttributes, CreationOptional } from "sequelize";
-import sequelize from '../config/database';
+import pool from '../config/database';
 
-class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
-    declare id: CreationOptional<number>;
-    declare username: string;
-    declare email: string;
-    //may want to further adjust password if employing constraints like length and special characters
-    declare password: string;
+export interface User {
+    id?: number;
+    username: string;
+    email: string;
+    password: string;
 }
 
-User.init({
-    id: { 
-        type: DataTypes.INTEGER, 
-        primaryKey: true, 
-        autoIncrement: true 
-    },
-    username: { 
-        type: DataTypes.STRING, 
-        allowNull: false, 
-        unique: true 
-    },
-    email: { 
-        type: DataTypes.STRING, 
-        allowNull: false, 
-        unique: true 
-    },
-    password: { 
-        type: DataTypes.STRING, 
-        allowNull: false 
-    },
-}, { 
-    sequelize,
-    timestamps: false,
-    modelName: 'user',
-    tableName: 'user' 
-});
+export const createUser = async (user: User): Promise<User> => {
+    const query = `
+        INSERT INTO "user" (username, email, password)
+        VALUES ($1, $2, $3)
+        RETURNING id, username, email;
+    `;
+    const values = [user.username, user.email, user.password];
+    const result = await pool.query(query, values);
+    return result.rows[0];
+};
 
-//User.hasMany(Post, { foreignKey: 'userId' });
+export const getUserByEmail = async (email: string): Promise<User | null> => {
+    const query = `
+        SELECT id, username, email, password
+        FROM "user"
+        WHERE email = $1
+    `;
+    const result = await pool.query(query, [email]);
+    return result.rows[0] || null;
+};
 
-export default User;

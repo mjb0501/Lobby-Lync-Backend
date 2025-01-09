@@ -1,12 +1,14 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/user';
-
-const JWT_SECRET_KEY = process.env.JWT_SECRET || 'secret';
 
 export const generateToken = (userId: number): string => {
+
+    if (!process.env.JWT_SECRET) {
+        throw Error("JWT SECRET not defined.");
+    }
+
     const payload = { userId };
 
-    const token = jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: '2h' });
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2h' });
 
     return token;
 }

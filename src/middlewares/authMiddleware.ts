@@ -8,12 +8,11 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     //this splits the authorization header so that the token in the header is assigned to token
     //header is formatted like: "Bearer <token>" this splits that string and grabs the token.
     //const token = req.headers.authorization?.split(' ')[1];
-
     const token = req.cookies.accessToken;
 
     if (!token) 
     {
-        //res.status(401).json({error: 'No token provided', loggedIn: false });
+        res.status(401).json({error: 'No token provided', loggedIn: false });
         return;
     }
 
@@ -27,7 +26,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
         
         //indicates a succesful login
         //res.locals.loggedIn = true;
-        
+
         //tells express to move onto next function
         next();
     }

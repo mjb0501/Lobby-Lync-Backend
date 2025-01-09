@@ -1,6 +1,5 @@
 import cron from 'node-cron';
-import { Op } from 'sequelize';
-import Post from '../models/post';
+import { deleteOldPosts } from '../models/post';
 
 let cleanupTask: cron.ScheduledTask | null = null;
 let isPostCleanupRunning: boolean = false;
@@ -12,13 +11,10 @@ export const startPostCleanupJob = () => {
     cleanupTask = cron.schedule('*/5 * * * *', async () => {
         try {
             const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-            const deletedPosts = await Post.destroy({
-                where: {
-                    createdAt: {
-                        [Op.lt]: twoHoursAgo,
-                    },
-                },
-            });
+            const twoHoursAgoTimestamp = twoHoursAgo.toISOString();
+
+            const deletedPosts = await deleteOldPosts(twoHoursAgoTimestamp);
+
             console.log(`Deleted ${deletedPosts} old posts.`);
         } catch (error) {
             console.error('Error deleteing old posts:', error);

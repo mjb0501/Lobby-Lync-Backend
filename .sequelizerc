@@ -1,8 +1,0 @@
-const path = require('path');
-console.log('Using config from: ', path.resolve('dist/config/database.js'));
-
-module.exports = {
-    'config': path.resolve('dist/config/database.js'), // Adjust path to your Sequelize config file
-    'migrations-path': path.resolve('dist/migrations'),
-    'seeders-path': path.resolve('dist/seeders'), // Optional: Update this if you use seeders
-}

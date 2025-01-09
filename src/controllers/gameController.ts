@@ -1,33 +1,21 @@
 import { Request, Response } from 'express';
-import { Op } from 'sequelize';
-import Game from '../models/game';
-import Platform from '../models/platform';
+import { searchGames, readGamePlatforms } from '../models/game';
 
 export const getGames = async (req: Request, res: Response): Promise<void> => {
-    //tells typescript that query will either be a string or undefined
     const query = req.query.query as string;
 
-    //if there is no query or query is less than 3 characters
     if (!query || query.length < 3) {
-        res.status(400).json({ message: 'Search query must be at least 3 characters long'});
+        res.status(400).json({ message: 'Search query must be at least 3 characters long' });
         return;
     }
 
     try {
-        //games = all entries in games table that match the provided query limits it to 10
-        const games = await Game.findAll({
-            where: {
-                name: {
-                    [Op.iLike]: `%${query}%`,
-                },
-            },
-            limit: 10,
-        });
+        const games = await searchGames(query);
 
         const gameNames = games.map(game => game.name);
         res.status(200).json(gameNames);
-    } catch (err) {
-        console.error('Error searching for games:', err);
+    } catch (error) {
+        console.error('Error searching for games:', error);
         res.status(500).json({ message: 'Failed to search for games' });
     }
 };
@@ -41,31 +29,36 @@ export const getGamePlatforms = async (req: Request, res: Response): Promise<voi
             return;
         }
 
-        const game = await Game.findOne({
-            where: { name: gameName },
-            include: [
-                {
-                    model: Platform,
-                    attributes: ['id', 'name'],
-                    as: 'platforms',
-                    through: { attributes: [] },
-                }
-            ]
-        });
+        const platforms = await readGamePlatforms(gameName);
 
-        if (!game) {
-            res.status(404).json({ message: `No platforms found for game: ${gameName}`});
+        if (platforms.length === 0) {
+            res.status(404).json({ message: `No platforms found for game: ${gameName}` });
             return;
         }
 
-        const formatted = {
-            gameId: game.id,
-            platforms: game.platforms?.map(platform => platform.name)
-        };
+        //.reduce processes each element (row) of the platforms array and accumulates a result in acc
+        const formatted = platforms.reduce((acc: any[], row: any) => {
+            //searches the acc array to check if there is an object (g) with a gameId matching gameId in row
+            let game = acc.find(g => g.gameId === row.gameId);
 
-        const platforms = game.platforms?.map(platform => platform.name);
+            //if game is not yet in acc then create new game object and add it to acc
+            if (!game) {
+                game = {
+                    gameId: row.gameId,
+                    platforms: []
+                };
+                acc.push(game);
+            }
 
-        res.status(200).json(formatted);
+            //if the platform exists and is not in game.platforms then add it to the acc.game.platforms array
+            if (row.platformName && !game.platforms.includes(row.platformName)) {
+                game.platforms.push(row.platformName);
+            }
+
+            return acc;
+        }, []);
+
+        res.status(200).json(formatted[0]);
     } catch (error) {
         console.error('Error fetching platforms: ', error);
         res.status(500).json({ message: 'Failed to fetch platforms' });

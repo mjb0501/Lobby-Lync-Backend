@@ -1,31 +1,25 @@
 require('dotenv').config();
-import { Sequelize } from "sequelize";
+import { Pool } from 'pg';
 
-console.log(process.env);  // Log environment variables
-console.log(process.env.DB_HOST, process.env.DB_PORT, process.env.POSTGRES_DB);  // Log specific config values
+const pool = new Pool({
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT),
+    database: process.env.POSTGRES_DB,
+    max: 10,
+    idleTimeoutMillis: 10000,
+});
 
-export const sequelize = new Sequelize(process.env.POSTGRES_DB!, process.env.POSTGRES_USER!, process.env.POSTGRES_PASSWORD!, 
-    {
-        host: process.env.DB_HOST!,
-        port: Number(process.env.DB_PORT),
-        dialect: 'postgres',
-        logging: process.env.NODE_ENV === 'development' ? console.log : false,
-        pool: {
-            max: 10, //max # of connections
-            min: 0,
-            idle: 10000, //close idle connections after 10 seconds
-        }
-    }
-);
+export const query = (text: string, params?: any[]) => pool.query(text, params);
 
-//testing the connection to ensure it is connected
-export const testDatabaseConnection = async () => {
-    try {
-        await sequelize.authenticate();
-        console.log('Database connection has been established successfully.');
-    } catch (err) {
-        console.error('Unable to connect to the database:', err);
-    }
-};
+pool.on('connect', () => {
+    console.log('Database connected successfully.');
+});
 
-export default sequelize;
+pool.on('error', (err) => {
+    console.log('Unexpected error on idle client', err);
+    process.exit(-1);
+});
+
+export default pool;

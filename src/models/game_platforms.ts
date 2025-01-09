@@ -1,48 +1,7 @@
-import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from 'sequelize';
-import sequelize from '../config/database';
-import Game from './game';
+import pool from '../config/database';
 
-class GamePlatform extends Model<InferAttributes<GamePlatform>, InferCreationAttributes<GamePlatform>> {
-  declare id: CreationOptional<number>;
-  declare gameId: number;
-  declare platformId: number;
+export interface GamePlatform {
+  id?: number;
+  gameId: number;
+  platformId: number;
 }
-
-GamePlatform.init({
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  },
-  gameId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'game',
-      key: 'id',
-    },
-    onDelete: 'CASCADE',
-  },
-  platformId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'platform',
-      key: 'id',
-    },
-    onDelete: 'CASCADE',
-  },
-}, {
-  sequelize,
-  modelName: 'game_platform',
-  tableName: 'game_platform',
-  timestamps: false,
-  indexes: [
-    {
-      unique: true,
-      fields: ['gameId', 'platformId'],
-    },
-  ],
-});
-
-export default GamePlatform

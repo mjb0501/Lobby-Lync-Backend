@@ -1,13 +1,11 @@
-import express, { application } from 'express';
+import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes';
 import postRoutes from './routes/postRoutes';
 import gameRoutes from './routes/gameRoutes';
-import sequelize from './config/database';
-import { testDatabaseConnection } from './config/database';
-import defineAssociations from './models/modelAssociations';
+import pool from './config/database';
 import { startPostCleanupJob, stopPostCleanupJob} from './services/postCleanupService';
 
 dotenv.config();
@@ -28,33 +26,42 @@ app.use('/auth', authRoutes);
 app.use('/posts', postRoutes);
 app.use('/games', gameRoutes);
 
-defineAssociations();
+const testDatabaseConnection = async () => {
+    try {
+        const result = await pool.query('SELECT NOW()');
+        console.log('Database connected:', result.rows[0].now);
+    } catch (error) {
+        console.error('Failed to connect to the database:', error);
+        process.exit(1);
+    }
+};
 
-startPostCleanupJob();
+const shutDownHandler = async (server: ReturnType<typeof app.listen>) => {
+    console.log('Gracefully shutting down...');
+    stopPostCleanupJob();
 
-sequelize.sync({}).then(() => {
-    const server = app.listen(process.env.PORT || 3000, async () => { 
-        console.log('Server running')
-        await testDatabaseConnection();
+    server.close(() => {
+        console.log('Server closed.');
+        process.exit(0);
     });
 
-    const shutDownHandler = async () => {
-        console.log('Gracefully shutting down...');
-        stopPostCleanupJob();
+    setTimeout(() => {
+        console.error('Forcing server shutdown...');
+        process.exit(1);
+    }, 10000);
+};
 
-        server.close(() => {
-            console.log('Server closed.');
-            process.exit(0);
-        });
+(async () => {
+    await testDatabaseConnection();
 
-        setTimeout(() => {
-            console.error('Forcing server shutdown...');
-            process.exit(1);
-        }, 10000);
-    };
+    const server = app.listen(process.env.PORT, () => {
+        console.log(`Server is running on port ${process.env.PORT}`);
+    });
 
-    process.on('SIGINT', shutDownHandler);
-    process.on('SIGTERM', shutDownHandler);
-});
+    startPostCleanupJob();
+
+    process.on('SIGINT', () => shutDownHandler(server));
+    process.on('SIGTERM', () => shutDownHandler(server));
+})();
 
 export default app;

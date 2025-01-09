@@ -1,27 +1,17 @@
-import { DataTypes, Model, InferAttributes, InferCreationAttributes, CreationOptional } from "sequelize";
-import sequelize from '../config/database';
+import pool from '../config/database';
 
-class Platform extends Model<InferAttributes<Platform>, InferCreationAttributes<Platform>> {
-  declare id: CreationOptional<number>;
-  declare name: string;
+export interface Platform {
+    id?: number;
+    name: string;
 }
 
-Platform.init({
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-    },
-    name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
-    },
-}, {
-    sequelize, 
-    timestamps: false,
-    modelName: 'platform',
-    tableName: 'platform'
-});
+export const getPlatformIdByName = async (platformName: string): Promise<number | null> => {
+    const query = `
+        SELECT id
+        FROM platform
+        WHERE name = $1
+    `;
+    const result = await pool.query(query, [platformName]);
+    return result.rows[0].id;
+}
 
-export default Platform;
