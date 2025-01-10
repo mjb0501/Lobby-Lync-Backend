@@ -64,7 +64,7 @@ const config: Config = {
   // globalSetup: undefined,
 
   // A path to a module which exports an async function that is triggered once after all test suites
-  // globalTeardown: undefined,
+  // globalTeardown: './test/teardown.ts',
 
   // A set of global variables that need to be available in all test environments
   // globals: {},
@@ -73,9 +73,10 @@ const config: Config = {
   // maxWorkers: "50%",
 
   // An array of directory names to be searched recursively up from the requiring module's location
-  // moduleDirectories: [
-  //   "node_modules"
-  // ],
+  moduleDirectories: [
+   "node_modules",
+   "src"
+  ],
 
   // An array of file extensions your modules use
   moduleFileExtensions: [
@@ -137,7 +138,7 @@ const config: Config = {
   // setupFiles: [],
 
   // A list of paths to modules that run some code to configure or set up the testing framework before each test
-  // setupFilesAfterEnv: [],
+  setupFilesAfterEnv: ['./test/setup.ts'],
 
   // The number of seconds after which a test is considered as slow and reported as such in the results.
   // slowTestThreshold: 5,
@@ -157,7 +158,8 @@ const config: Config = {
   // The glob patterns Jest uses to detect test files
   testMatch: [
   //   "**/__tests__/**/*.[jt]s?(x)",
-     "**/?(*.)+(spec|test).ts"
+  //   "**/?(*.)+(spec|test).ts"
+   '**/test/**/*.test.ts'
   ],
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
