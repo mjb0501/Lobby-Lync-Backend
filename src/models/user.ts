@@ -14,8 +14,13 @@ export const createUser = async (user: User): Promise<User> => {
         RETURNING id, username, email;
     `;
     const values = [user.username, user.email, user.password];
-    const result = await pool.query(query, values);
-    return result.rows[0];
+    try {
+        const result = await pool.query(query, values);
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error creating user:', error);
+        throw new Error('Failed to create new user');
+    }
 };
 
 export const getUserByEmail = async (email: string): Promise<User | null> => {
@@ -24,7 +29,12 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
         FROM "user"
         WHERE email = $1
     `;
-    const result = await pool.query(query, [email]);
-    return result.rows[0] || null;
+    try {
+        const result = await pool.query(query, [email]);
+        return result.rows[0] || null;
+    } catch (error) {
+        console.error('Error fetching user by email:', error);
+        throw new Error('Failed to find user by email');
+    }
 };
 

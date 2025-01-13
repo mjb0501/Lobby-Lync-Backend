@@ -15,8 +15,14 @@ export const createPost = async (post: Post): Promise<Post> => {
     RETURNING id, "userId", "gameId", description, "createdAt";
   `;
   const values = [post.userId, post.gameId, post.description];
-  const result = await pool.query(query, values);
-  return result.rows[0];
+  try {
+    const result = await pool.query(query, values);
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    throw new Error('Failed to create post');
+  }
+  
 };
 
 export const readAllPosts = async (userId?: number): Promise<any[]> => {

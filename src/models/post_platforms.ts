@@ -12,6 +12,12 @@ export const createPostPlatform = async (platformId: number, postId: number): Pr
     VALUES ($1, $2)
   `;
   const values = [platformId, postId];
-  await pool.query(query, values);
-  return;
+  try {
+    await pool.query(query, values);
+    return;
+  } catch (error) {
+    console.error('Error assigning platforms to post:', error);
+    throw new Error('Failed to assign platforms to post');
+  }
+  
 }

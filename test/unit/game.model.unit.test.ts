@@ -33,6 +33,24 @@ describe('Game Model - Unit Tests', () => {
             );
             expect(result).toEqual(mockResult.rows);
         });
+
+        it('should throw an error when the database query fails', async () => {
+            const mockError = new Error('Database error');
+
+            await expect(searchGames('mockQuery')).rejects.toThrow(
+                'Failed to search for games'
+            );
+            expect(pool.query).toHaveBeenCalledWith(
+                `
+    SELECT name
+    FROM game
+    WHERE name ILIKE $1
+    LIMIT 10;
+  `,
+                [`%mockQuery%`]
+            );
+        })
+        
     });
 
     describe('readGamePlatforms', () => {

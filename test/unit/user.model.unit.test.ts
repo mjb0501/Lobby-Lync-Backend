@@ -38,6 +38,23 @@ describe('User Model - Unit Tests', () => {
             //verifies that the returned result matches the mock data
             expect(result).toEqual(mockResult.rows[0]);
         });
+
+        it('should throw an error when the database query fails', async () => {
+            const mockError = new Error('Database error');
+            (pool.query as jest.Mock).mockRejectedValueOnce(mockError);
+
+            await expect(createUser({ username: 'test', email: 'test', password: 'test' })).rejects.toThrow(
+                'Failed to create new user'
+            );
+            expect(pool.query).toHaveBeenCalledWith(
+                `
+        INSERT INTO "user" (username, email, password)
+        VALUES ($1, $2, $3)
+        RETURNING id, username, email;
+    `,
+                ['test', 'test', 'test']
+            );
+        });
     });
 
     describe('getUserByEmail', () => {
@@ -70,6 +87,23 @@ describe('User Model - Unit Tests', () => {
                 [mockEmail]
             );
             expect(result).toBeNull();
+        });
+
+        it('should throw an error when the database query fails', async () => {
+            const mockError = new Error('Database error');
+            (pool.query as jest.Mock).mockRejectedValueOnce(mockError);
+
+            await expect(getUserByEmail('test@example.com')).rejects.toThrow(
+                'Failed to find user by email'
+            );
+            expect(pool.query).toHaveBeenCalledWith(
+                `
+        SELECT id, username, email, password
+        FROM "user"
+        WHERE email = $1
+    `,
+                ['test@example.com']
+            );
         });
     });
 });
