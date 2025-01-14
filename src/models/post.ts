@@ -59,10 +59,24 @@ export const readUserCreatedPost = async (userId: number): Promise<any> => {
 
   try {
     const result = await pool.query(query, [userId]);
-    return result.rows;
+    return result.rows.length ? result.rows : [];
   } catch (error) {
     console.error('Error fetching post:', error);
     throw new Error('Failed to fetch post created by user');
+  }
+}
+
+export const deletePostById = async (userId: number): Promise<any> => {
+  const query = `
+    DELETE FROM post
+    WHERE post."userId" = $1;
+  `;
+
+  try {
+    await pool.query(query, [userId]);
+  } catch (error) {
+    console.error('Error deleting post by id:', error);
+    throw new Error('Failed to delete post by id');
   }
 }
 

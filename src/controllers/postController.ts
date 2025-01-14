@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createPost, readAllPosts, readUserCreatedPost } from '../models/post';
+import { createPost, readAllPosts, readUserCreatedPost, deletePostById } from '../models/post';
 import { createPostPlatform } from '../models/post_platforms';
 import { getPlatformIdByName } from '../models/platform';
 import { createPostAccept } from '../models/post_acceptance';
@@ -80,12 +80,17 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
 export const getPostById = async (req: Request, res: Response): Promise<void> => {
     try {
         if (!req.userId) {
-            console.error('Error fetching post by id');
-            res.status(400).json({ message: 'user is not authenticated'});
+            res.status(400).json({ error: 'user is not authenticated'});
             return;
         }
 
         const post = await readUserCreatedPost(req.userId);
+
+        //runs if no posts were found
+        if (post.length == 0) {
+            res.status(200).json(null);
+            return;
+        }
 
         let formattedPost: any = {
             postId: post[0].postId,
@@ -123,5 +128,21 @@ export const acceptPost = async (req: Request, res: Response): Promise<void> => 
     } catch (error) {
         console.error('Error accepting post:', error);
         res.status(500).json({ error: 'Error accepting post' });
+    }
+}
+
+export const deletePost = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.userId) {
+            res.status(400).json({ error: 'user is not authenticated'});
+            return;
+        }
+
+        await deletePostById(req.userId);
+
+        res.status(200).json({ message: 'Post deleted successfully'});
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        res.status(500).json({ error: 'Server Error' });
     }
 }
