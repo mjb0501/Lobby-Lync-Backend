@@ -25,7 +25,7 @@ export const createPost = async (post: Post): Promise<Post> => {
   
 };
 
-export const readAllPosts = async (userId?: number): Promise<any[]> => {
+export const readAllPosts = async (userId?: number, gameName?: string): Promise<any[]> => {
   const query = `
     SELECT p.id AS "postId", u.username AS user, g.name AS "gameName", p.description, p."createdAt", pl.name AS "platformName"
     FROM post p
@@ -33,15 +33,36 @@ export const readAllPosts = async (userId?: number): Promise<any[]> => {
     LEFT JOIN game g ON p."gameId" = g.id
     LEFT JOIN post_platform pp ON p.id = pp."postId"
     LEFT JOIN platform pl ON pp."platformId" = pl.id
-    WHERE ($1::INT IS NULL OR p."userId" != $1);
+    WHERE ($1::INT IS NULL OR p."userId" IS DISTINCT FROM $1)
+    AND ($2::TEXT IS NULL OR g.name = $2);
   `;
 
   try {
-    const result = await pool.query(query, [userId || null]);
+    const result = await pool.query(query, [userId || null, gameName || null]);
     return result.rows;
   } catch (error) {
     console.error('Error fetching posts:', error);
     throw new Error('Failed to fetch posts');
+  }
+}
+
+export const readUserCreatedPost = async (userId: number): Promise<any> => {
+  const query = `
+    SELECT p.id AS "postId", u.username AS user, g.name AS "gameName", p.description, p."createdAt", pl.name AS "platformName"
+    FROM post p
+	  LEFT JOIN "user" u ON p."userId" = u.id
+    LEFT JOIN game g ON p."gameId" = g.id
+    LEFT JOIN post_platform pp ON p.id = pp."postId"
+    LEFT JOIN platform pl ON pp."platformId" = pl.id
+    WHERE p."userId" = $1;
+  `;
+
+  try {
+    const result = await pool.query(query, [userId]);
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    throw new Error('Failed to fetch post created by user');
   }
 }
 

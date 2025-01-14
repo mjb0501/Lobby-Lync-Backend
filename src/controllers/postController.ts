@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createPost, readAllPosts } from '../models/post';
+import { createPost, readAllPosts, readUserCreatedPost } from '../models/post';
 import { createPostPlatform } from '../models/post_platforms';
 import { getPlatformIdByName } from '../models/platform';
 import { createPostAccept } from '../models/post_acceptance';
@@ -43,12 +43,10 @@ export const insertPost = async (req: Request, res: Response): Promise<void> => 
 export const getPosts = async (req: Request, res: Response): Promise<void> => {
     try {
         let posts: any;
-        //console.log(req.userId)
-        if (req.userId) {
-            posts = await readAllPosts(req.userId);
-        } else {
-            posts = await readAllPosts();
-        }
+
+        const gameName = req.query.gameName as string;
+
+        posts = await readAllPosts(req.userId, gameName);
 
         const formattedPosts = posts.reduce((acc: any[], row: any) => {
             let post = acc.find(p => p.postId == row.postId);
@@ -78,6 +76,36 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+
+export const getPostById = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.userId) {
+            console.error('Error fetching post by id');
+            res.status(400).json({ message: 'user is not authenticated'});
+            return;
+        }
+
+        const post = await readUserCreatedPost(req.userId);
+
+        let formattedPost: any = {
+            postId: post[0].postId,
+            user: post[0].user,
+            game: post[0].gameName,
+            description: post[0].description,
+            createdAt: post[0].createdAt,
+            platforms: [],
+        };
+
+        post.forEach((row: any) => {
+            formattedPost.platforms.push(row.platformName);
+        })
+
+        res.status(200).json(formattedPost);
+    } catch (error) {
+        console.error('Error fetching post by id:', error);
+        res.status(500).json({ error: 'Server Error' });
+    }
+}
 
 export const acceptPost = async (req: Request, res: Response): Promise<void> => {
     try {

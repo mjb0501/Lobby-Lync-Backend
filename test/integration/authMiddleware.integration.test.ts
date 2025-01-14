@@ -34,7 +34,7 @@ describe('Integration Tests for Authentication Middlewares', () => {
     });
 
     it('should return success for valid token for secure endpoint', async () => {
-        const validToken = generateToken(1); // Mock token, replace with an actual JWT token if necessary
+        const validToken = generateToken(1);
 
         const response = await request(app)
             .post('/secure-endpoint')
