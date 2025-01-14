@@ -48,12 +48,14 @@ export const readAllPosts = async (userId?: number, gameName?: string): Promise<
 
 export const readUserCreatedPost = async (userId: number): Promise<any> => {
   const query = `
-    SELECT p.id AS "postId", u.username AS user, g.name AS "gameName", p.description, p."createdAt", pl.name AS "platformName"
+    SELECT p.id AS "postId", g.name AS "gameName", 
+	    p.description, p."createdAt", pl.name AS "platformName", u.username, pa.description AS "acceptDescription"
     FROM post p
-	  LEFT JOIN "user" u ON p."userId" = u.id
     LEFT JOIN game g ON p."gameId" = g.id
     LEFT JOIN post_platform pp ON p.id = pp."postId"
     LEFT JOIN platform pl ON pp."platformId" = pl.id
+    LEFT JOIN post_acceptance pa ON p."id" = pa."postId"
+    LEFT JOIN "user" u ON pa."userId" = u.id
     WHERE p."userId" = $1;
   `;
 

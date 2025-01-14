@@ -85,6 +85,7 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
         }
 
         const post = await readUserCreatedPost(req.userId);
+        //console.log(post);
 
         //runs if no posts were found
         if (post.length == 0) {
@@ -92,20 +93,27 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
             return;
         }
 
-        let formattedPost: any = {
+        let userPostInformation: any = {
             postId: post[0].postId,
-            user: post[0].user,
             game: post[0].gameName,
             description: post[0].description,
             createdAt: post[0].createdAt,
             platforms: [],
+            acceptances: [],
         };
 
         post.forEach((row: any) => {
-            formattedPost.platforms.push(row.platformName);
+            if (row.platformName && !userPostInformation.platforms.includes(row.platformName)) {
+                userPostInformation.platforms.push(row.platformName);
+            }
+
+            if (row.username && !userPostInformation.acceptances.some((item: any) => item.username === row.username && item.description === row.acceptDescription)) {
+                console.log(row.username);
+                userPostInformation.acceptances.push({ username: row.username, description: row.acceptDescription });
+            }
         })
 
-        res.status(200).json(formattedPost);
+        res.status(200).json(userPostInformation);
     } catch (error) {
         console.error('Error fetching post by id:', error);
         res.status(500).json({ error: 'Server Error' });
