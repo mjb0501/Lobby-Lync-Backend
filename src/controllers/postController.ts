@@ -12,6 +12,13 @@ export const insertPost = async (req: Request, res: Response): Promise<void> => 
             return;
         }
 
+        const response = await readUserCreatedPost(req.userId);
+
+        if (response.length > 0) {
+            res.status(201).json({ message: 'Already have an uploaded post', postId: null});
+            return;
+        }
+
         const { platformIds, gameId, description } = req.body;
         const userId = req.userId;
 
