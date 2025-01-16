@@ -12,8 +12,8 @@ export const insertPost = async (req: Request, res: Response): Promise<void> => 
             return;
         }
 
+        //this portion of code checks and ensures that a user does not already have an uploaded post
         const response = await readUserCreatedPost(req.userId);
-
         if (response.length > 0) {
             res.status(201).json({ message: 'Already have an uploaded post', postId: null});
             return;
@@ -92,7 +92,6 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
         }
 
         const post = await readUserCreatedPost(req.userId);
-        //console.log(post);
 
         //runs if no posts were found
         if (post.length == 0) {
@@ -115,7 +114,6 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
             }
 
             if (row.username && !userPostInformation.acceptances.some((item: any) => item.username === row.username && item.description === row.acceptDescription)) {
-                console.log(row.username);
                 userPostInformation.acceptances.push({ username: row.username, description: row.acceptDescription });
             }
         })
