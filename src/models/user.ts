@@ -38,3 +38,19 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
     }
 };
 
+export const getUserById = async (id: number): Promise<User | null> => {
+    const query = `
+        SELECT id, username, email
+        FROM "user"
+        WHERE id = $1
+    `;
+    try {
+        const result = await pool.query(query, [id]);
+        console.log(result.rows[0]);
+        return result.rows[0] || null;
+    } catch (error) {
+        console.error('Error fetching user by id:', error);
+        throw new Error('Failed to find user by id');
+    }
+};
+

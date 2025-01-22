@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { generateToken } from "../services/authService";
-import { createUser, getUserByEmail } from '../models/user';
+import { createUser, getUserByEmail, getUserById } from '../models/user';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -11,7 +11,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         const user = await createUser({ username, email, password: hashedPassword });
 
-        res.status(201).json(user);
+        res.status(201).json({ status: 'ok' });
     } catch (error) {
         console.error("Error registering user:", error);
         res.status(500).json({ error: "Error registering user" });
@@ -44,6 +44,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ error: "Error logging in" });
     }
 };
+
+export const getUser = async (req: Request, res: Response): Promise<void> => {
+    if (!req.userId) {
+        res.status(400).json({ error: 'User is not authenticated' });
+        return;
+    }
+    
+    try {
+        const user = await getUserById(req.userId);
+        console.log(user);
+
+        if (!user) throw Error;
+
+        res.status(201).json(user)
+    } catch (error) {
+        console.log(error);
+    }
+} 
 
 export const authLogout = (req: Request, res: Response): void => {
     res.clearCookie("accessToken", { httpOnly: true, secure: process.env.NODE_ENV === "production"});
