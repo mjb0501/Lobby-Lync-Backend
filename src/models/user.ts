@@ -38,16 +38,17 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
     }
 };
 
-export const getUserById = async (id: number): Promise<User | null> => {
+export const getUserById = async (id: number): Promise<any[]> => {
     const query = `
-        SELECT id, username, email
-        FROM "user"
-        WHERE id = $1
+        SELECT u.id, u.username, u.email, p.name AS "platformName", up."platformUsername"
+        FROM "user" u
+        LEFT JOIN user_platform up ON u.id = up."userId"
+        LEFT JOIN platform p ON up."platformId" = p.id
+        WHERE u.id = $1
     `;
     try {
         const result = await pool.query(query, [id]);
-        console.log(result.rows[0]);
-        return result.rows[0] || null;
+        return result.rows || null;
     } catch (error) {
         console.error('Error fetching user by id:', error);
         throw new Error('Failed to find user by id');
