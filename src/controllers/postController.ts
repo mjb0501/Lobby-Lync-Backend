@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { createPost, readAllPosts, readUserCreatedPost, deletePostById } from '../models/post';
-import { createPostPlatform } from '../models/post_platforms';
+import { createPost, readAllPosts, readUserCreatedPost, deletePostById, updatePost } from '../models/post';
+import { createPostPlatform, deletePostPlatforms } from '../models/post_platforms';
 import { getPlatformIdByName } from '../models/platform';
-import { createPostAccept } from '../models/post_acceptance';
+import { createPostAccept, deletePostAcceptanceById, readAcceptedPosts } from '../models/post_acceptance';
 
 export const insertPost = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -44,6 +44,50 @@ export const insertPost = async (req: Request, res: Response): Promise<void> => 
     } catch (error) {
         console.error('Error creating post:', error);
         res.status(500).json({ error: 'Error creating post' });
+    }
+}
+
+export const editPost = async (req: Request, res: Response): Promise<void> => {
+    try {
+
+        if (!req.userId) {
+            res.status(400).json({ error: 'User is not authenticated' });
+            return;
+        }
+
+        const { postId, platformIds, gameId, description } = req.body;
+        const userId = req.userId;
+
+        const existingPost = await readUserCreatedPost(userId);
+        if (!existingPost) {
+            res.status(404).json({ error: 'Post not found' });
+            return;
+        }
+
+        await updatePost(postId, userId, gameId, description);
+
+
+        if (platformIds && Array.isArray(platformIds) && typeof postId == 'number') {
+
+            await deletePostPlatforms(postId);
+
+            for (const platformName of platformIds) {
+                const platformId = await getPlatformIdByName(platformName);
+
+                if (platformId) {
+                    await createPostPlatform(platformId, postId);
+                } else {
+                    console.error(`Platform name "${platformName}" not found`);
+                    res.status(400).json({ error: `Platform name "${platformName}" not found` });
+                    return;
+                }
+            }
+        }
+        
+        res.status(200).json({ message: 'Post updated Successfully' });
+    } catch (error) {
+        console.error('Error editing post:', error);
+        res.status(500).json({ error: 'Error editing post'});
     }
 }
 
@@ -157,5 +201,61 @@ export const deletePost = async (req: Request, res: Response): Promise<void> => 
     } catch (error) {
         console.error('Error deleting post:', error);
         res.status(500).json({ error: 'Server Error' });
+    }
+}
+
+export const deletePostAcceptance = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.userId) {
+            res.status(400).json({ error: 'user is not authenticated'});
+            return;
+        }
+        
+        await deletePostAcceptanceById(req.userId);
+
+        res.status(200).json({ message: 'Post acceptance deleted successfully'});
+    } catch (error) {
+        console.error('Error deleting post acceptance', error);
+        res.status(500).json({ error: 'Server Error' });
+    }
+}
+
+export const getAcceptedPosts = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.userId) {
+            res.status(400).json({ error: 'user is not authenticated'});
+            return;
+        }
+
+        const posts = await readAcceptedPosts(req.userId);
+        console.log(posts);
+
+        const formattedPosts = posts.reduce((acc: any[], row: any) => {
+            let post = acc.find(p => p.postId == row.postId);
+
+            if (!post) {
+                post = {
+                    postId: row.postId,
+                    creator: row.postCreator,
+                    game: row.gameName,
+                    description: row.description,
+                    createdAt: row.createdAt,
+                    platforms: []
+                }
+                acc.push(post);
+            }
+
+            if (row.platformName && !post.platforms.includes(row.platformName)) {
+                post.platforms.push(row.platformName);
+            }
+
+            return acc;
+        }, []);
+
+        console.log('Formatted Posts: ', formattedPosts);
+
+        res.status(200).json(formattedPosts);
+    } catch (error) {
+        console.log(error);
     }
 }

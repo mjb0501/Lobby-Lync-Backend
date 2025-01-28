@@ -25,6 +25,27 @@ export const createPost = async (post: Post): Promise<Post> => {
   
 };
 
+export const updatePost = async (postId: number, userId: number, gameId: number, description: string) => {
+  const query = `
+  UPDATE post
+  SET
+    "gameId" = $1,
+    description = $2,
+    "createdAt" = NOW()
+  WHERE
+    id = $3 AND "userId" = $4;
+  `;
+  
+  const values = [gameId, description, postId, userId];
+  try {
+    const result = await pool.query(query, values);
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error editing post:', error);
+    throw new Error('Failed to edit post');
+  }
+}
+
 export const readAllPosts = async (userId?: number, gameName?: string): Promise<any[]> => {
   const query = `
     SELECT p.id AS "postId", u.username AS user, g.name AS "gameName", p.description, p."createdAt", pl.name AS "platformName"

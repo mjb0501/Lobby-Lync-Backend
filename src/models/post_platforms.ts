@@ -19,5 +19,19 @@ export const createPostPlatform = async (platformId: number, postId: number): Pr
     console.error('Error assigning platforms to post:', error);
     throw new Error('Failed to assign platforms to post');
   }
-  
+}
+
+export const deletePostPlatforms = async (postId: number): Promise<void> => {
+  const query = `
+  DELETE FROM post_platform
+  WHERE "postId" = $1;
+  `;
+
+  try {
+    await pool.query(query, [postId]);
+    return;
+  } catch (error) {
+    console.error('Error deleting platforms associated with post:', error);
+    throw new Error('Failed to assign platforms to post');
+  }
 }

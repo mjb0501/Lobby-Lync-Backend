@@ -54,7 +54,6 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
     
     try {
         const userInfo = await getUserById(req.userId);
-        console.log(userInfo);
 
         if (!userInfo) throw Error;
 
@@ -78,9 +77,6 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
 
             return acc;
         }, []);
-
-        console.log("this is the formatted user: ", formattedUser);
-
 
         res.status(201).json(formattedUser)
     } catch (error) {
