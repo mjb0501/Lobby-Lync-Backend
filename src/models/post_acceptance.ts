@@ -5,15 +5,29 @@ export interface PostAcceptance {
   postId: number;
   userId: number;
   description: string;
+  platform: string;
+  platformUsername?: string;
 }
 
 export const createPostAccept = async (accept: PostAcceptance): Promise<any> => {
-  const query = `
-    INSERT INTO post_acceptance ("postId", "userId", description)
-    VALUES ($1, $2, $3)
-    RETURNING "postId", "userId", description;
+  let query = `
+    INSERT INTO post_acceptance ("postId", "userId", description, platform
   `;
-  const values = [accept.postId, accept.userId, accept.description];
+
+  const values = [accept.postId, accept.userId, accept.description, accept.platform];
+  if (accept.platformUsername) {
+    query += `, "platformUsername"`;
+    values.push(accept.platformUsername);
+  }
+
+  query += `) VALUES ($1, $2, $3, $4`;
+
+  if (accept.platformUsername) {
+    query += `, $5`;
+  }
+
+  query += `) RETURNING "postId", "userId", description, platform, "platformUsername";`;
+
   try {
     const results = await pool.query(query, values);
     return results.rows[0];
@@ -44,14 +58,14 @@ export const readAcceptedPosts = async (userId: number): Promise<any> => {
   }
 }
 
-export const deletePostAcceptanceById = async (userId: number): Promise<any> => {
+export const deletePostAcceptanceById = async (userId: number, postId: number): Promise<any> => {
   const query = `
     DELETE FROM post_acceptance
-    WHERE post_acceptance."userId" = $1
+    WHERE post_acceptance."userId" = $1 AND post_acceptance."postId" = $2;
   `;
 
   try {
-    await pool.query(query, [userId]);
+    await pool.query(query, [userId, postId]);
   } catch (error) {
     console.error('Error deleting post acceptance by id:', error);
     throw new Error('Failed to delete post by id');

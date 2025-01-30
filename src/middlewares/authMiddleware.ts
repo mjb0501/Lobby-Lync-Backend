@@ -11,7 +11,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     const token = req.cookies.accessToken;
     if (!token) 
     {
-        res.status(401).json({error: 'No token provided', loggedIn: false });
+        res.status(401).json({error: 'Unauthorized', loggedIn: false });
         return;
     }
 
@@ -49,7 +49,7 @@ export const optionalAuthenticate = (req: Request, res: Response, next: NextFunc
             req.userId = decoded.userId;
         }
     } catch (error) {
-        console.error('Error decoding token:', error);
+        console.error('Invalid token', error);
     }
 
     next();

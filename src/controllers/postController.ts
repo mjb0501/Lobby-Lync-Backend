@@ -106,6 +106,7 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
                 post = {
                     postId: row.postId,
                     user: row.user,
+                    gameId: row.gameId,
                     game: row.gameName,
                     description: row.description,
                     createdAt: row.createdAt,
@@ -120,6 +121,7 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
 
             return acc;
         }, []);
+
 
         res.status(200).json(formattedPosts);
     } catch (error) {
@@ -146,6 +148,7 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
         let userPostInformation: any = {
             postId: post[0].postId,
             game: post[0].gameName,
+            gameId: post[0].gameId,
             description: post[0].description,
             createdAt: post[0].createdAt,
             platforms: [],
@@ -158,7 +161,7 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
             }
 
             if (row.username && !userPostInformation.acceptances.some((item: any) => item.username === row.username && item.description === row.acceptDescription)) {
-                userPostInformation.acceptances.push({ username: row.username, description: row.acceptDescription });
+                userPostInformation.acceptances.push({ username: row.username, description: row.acceptDescription, platform: row.acceptPlatform, platformUsername: row.acceptedPlatformUsername });
             }
         })
 
@@ -176,10 +179,10 @@ export const acceptPost = async (req: Request, res: Response): Promise<void> => 
             return;
         }
 
-        const { postId, description } = req.body;
+        const { postId, description, platform, platformUsername } = req.body;
         const userId = req.userId;
 
-        await createPostAccept({ postId, userId, description });
+        await createPostAccept({ postId, userId, description, platform, platformUsername });
 
         res.status(201).json({ message: 'Post accepted successfully' });
     } catch (error) {
@@ -210,8 +213,19 @@ export const deletePostAcceptance = async (req: Request, res: Response): Promise
             res.status(400).json({ error: 'user is not authenticated'});
             return;
         }
+
+        //console.log("delete hit");
+
+        const postId = req.params.postId || req.query.postId;
+
+        if (!postId) {
+            res.status(400).json({ error: 'Missing acceptId'});
+            return;
+        }
+
+        console.log("delete hit");
         
-        await deletePostAcceptanceById(req.userId);
+        await deletePostAcceptanceById(req.userId, Number(postId));
 
         res.status(200).json({ message: 'Post acceptance deleted successfully'});
     } catch (error) {
@@ -228,7 +242,6 @@ export const getAcceptedPosts = async (req: Request, res: Response): Promise<voi
         }
 
         const posts = await readAcceptedPosts(req.userId);
-        console.log(posts);
 
         const formattedPosts = posts.reduce((acc: any[], row: any) => {
             let post = acc.find(p => p.postId == row.postId);
@@ -251,8 +264,6 @@ export const getAcceptedPosts = async (req: Request, res: Response): Promise<voi
 
             return acc;
         }, []);
-
-        console.log('Formatted Posts: ', formattedPosts);
 
         res.status(200).json(formattedPosts);
     } catch (error) {
