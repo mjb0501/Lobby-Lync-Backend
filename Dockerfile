@@ -1,4 +1,4 @@
-FROM node:22.12.0-alpine
+FROM node:22.12.0-alpine AS builder
 
 WORKDIR /app
 
@@ -9,6 +9,16 @@ RUN npm install
 COPY . .
 
 RUN npm run build
+
+FROM node:22.12.0-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/package.json /app/package.json
+COPY --from=builder /app/package-lock.json /app/package-lock.json
+
+RUN npm install --omit=dev
 
 EXPOSE 3001
 

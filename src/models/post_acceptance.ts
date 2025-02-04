@@ -71,3 +71,20 @@ export const deletePostAcceptanceById = async (userId: number, postId: number): 
     throw new Error('Failed to delete post by id');
   }
 }
+
+export const deletePostAcceptanceByUsername = async (username: string, postId: number): Promise<any> => {
+  const query = `
+    DELETE FROM post_acceptance
+    USING "user"
+    WHERE post_acceptance."userId" = "user".id
+    AND "user".username = $1
+    AND post_acceptance."postId" = $2;
+  `;
+
+  try {
+    await pool.query(query, [username, postId]);
+  } catch (error) {
+    console.error('Error rejecting post acceptance:', error);
+    throw new Error('Failed to reject post');
+  }
+}

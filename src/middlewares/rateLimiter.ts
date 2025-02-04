@@ -47,7 +47,7 @@ export const acceptPostRateLimit = rateLimit({
 
 export const generalRateLimit = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10000,
+    max: 100000,
     message: { error: 'Too many requests, please slow down.' },
     standardHeaders: true,
     legacyHeaders: true,

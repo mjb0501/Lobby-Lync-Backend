@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { createPost, readAllPosts, readUserCreatedPost, deletePostById, updatePost } from '../models/post';
 import { createPostPlatform, deletePostPlatforms } from '../models/post_platforms';
 import { getPlatformIdByName } from '../models/platform';
-import { createPostAccept, deletePostAcceptanceById, readAcceptedPosts } from '../models/post_acceptance';
+import { createPostAccept, deletePostAcceptanceById, deletePostAcceptanceByUsername, readAcceptedPosts } from '../models/post_acceptance';
 
 export const insertPost = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -230,6 +230,29 @@ export const deletePostAcceptance = async (req: Request, res: Response): Promise
         res.status(200).json({ message: 'Post acceptance deleted successfully'});
     } catch (error) {
         console.error('Error deleting post acceptance', error);
+        res.status(500).json({ error: 'Server Error' });
+    }
+}
+
+export const rejectPostAcceptance = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.userId) {
+            res.status(400).json({ error: 'user is not authenticated'});
+            return;
+        }
+
+        const {username, postId } = req.body;
+
+        if (!postId || !username) {
+            res.status(400).json({ error: 'Missing Information for Reject'});
+            return;
+        }
+
+        await deletePostAcceptanceByUsername(username, postId);
+
+        res.status(200).json({ message: 'Post acceptance succesfully rejected' });
+    } catch (error) {
+        console.error('Error rejecting post acceptnace', error);
         res.status(500).json({ error: 'Server Error' });
     }
 }
