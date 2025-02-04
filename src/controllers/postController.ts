@@ -3,6 +3,7 @@ import { createPost, readAllPosts, readUserCreatedPost, deletePostById, updatePo
 import { createPostPlatform, deletePostPlatforms } from '../models/post_platforms';
 import { getPlatformIdByName } from '../models/platform';
 import { createPostAccept, deletePostAcceptanceById, deletePostAcceptanceByUsername, readAcceptedPosts } from '../models/post_acceptance';
+import { createConversation } from '../models/conversation';
 
 export const insertPost = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -105,6 +106,7 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
             if (!post) {
                 post = {
                     postId: row.postId,
+                    userId: row.userId,
                     user: row.user,
                     gameId: row.gameId,
                     game: row.gameName,
@@ -139,6 +141,8 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
 
         const post = await readUserCreatedPost(req.userId);
 
+        console.log(post);
+
         //runs if no posts were found
         if (post.length == 0) {
             res.status(200).json(null);
@@ -161,7 +165,11 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
             }
 
             if (row.username && !userPostInformation.acceptances.some((item: any) => item.username === row.username && item.description === row.acceptDescription)) {
-                userPostInformation.acceptances.push({ username: row.username, description: row.acceptDescription, platform: row.acceptPlatform, platformUsername: row.acceptedPlatformUsername });
+                userPostInformation.acceptances.push({ 
+                    username: row.username, description: row.acceptDescription, 
+                    platform: row.acceptPlatform, platformUsername: row.acceptedPlatformUsername, 
+                    conversationId: row.conversationId
+                });
             }
         })
 
@@ -179,10 +187,14 @@ export const acceptPost = async (req: Request, res: Response): Promise<void> => 
             return;
         }
 
-        const { postId, description, platform, platformUsername } = req.body;
+        const { postId, description, platform, platformUsername, creatorId } = req.body;
         const userId = req.userId;
 
         await createPostAccept({ postId, userId, description, platform, platformUsername });
+
+        console.log('creatorid', creatorId);
+
+        await createConversation(postId, creatorId, userId);
 
         res.status(201).json({ message: 'Post accepted successfully' });
     } catch (error) {

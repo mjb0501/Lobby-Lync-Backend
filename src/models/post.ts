@@ -48,7 +48,7 @@ export const updatePost = async (postId: number, userId: number, gameId: number,
 
 export const readAllPosts = async (userId?: number, gameName?: string): Promise<any[]> => {
   const query = `
-    SELECT p.id AS "postId", u.username AS user, g.name AS "gameName", g.id AS "gameId", p.description, p."createdAt", pl.name AS "platformName"
+    SELECT p.id AS "postId", u.id AS "userId", u.username AS user, g.name AS "gameName", g.id AS "gameId", p.description, p."createdAt", pl.name AS "platformName"
     FROM post p
 	  LEFT JOIN "user" u ON p."userId" = u.id
     LEFT JOIN game g ON p."gameId" = g.id
@@ -71,13 +71,15 @@ export const readUserCreatedPost = async (userId: number): Promise<any> => {
   const query = `
     SELECT p.id AS "postId", g.name AS "gameName", g.id AS "gameId", 
 	    p.description, p."createdAt", pl.name AS "platformName", u.username, 
-      pa.description AS "acceptDescription", pa.platform AS "acceptPlatform", pa."platformUsername" AS "acceptedPlatformUsername"
+      pa.description AS "acceptDescription", pa.platform AS "acceptPlatform",
+      pa."platformUsername" AS "acceptedPlatformUsername", c.id AS "conversationId"
     FROM post p
     LEFT JOIN game g ON p."gameId" = g.id
     LEFT JOIN post_platform pp ON p.id = pp."postId"
     LEFT JOIN platform pl ON pp."platformId" = pl.id
     LEFT JOIN post_acceptance pa ON p."id" = pa."postId"
     LEFT JOIN "user" u ON pa."userId" = u.id
+    LEFT JOIN conversation c ON u.id = c."acceptorId" AND p.id = c."postId"
     WHERE p."userId" = $1;
   `;
 
