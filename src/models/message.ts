@@ -10,7 +10,7 @@ export interface Message {
 
 export const createMessage = async (conversationId: number, senderId: number, content: string) => {
     const query = `
-        INSERT INTO "message" ("conversatinId", "senderId", content)
+        INSERT INTO "message" ("conversationId", "senderId", content)
         VALUES ($1, $2, $3)
         RETURNING *;
     `;
@@ -28,8 +28,8 @@ export const createMessage = async (conversationId: number, senderId: number, co
 export const readMessages = async (conversationId: number) => {
     const query = `
         SELECT m.*, u.username
-        FROM messages m
-        JOIN users u ON m."senderId" = u.id
+        FROM "message" m
+        JOIN "user" u ON m."senderId" = u.id
         WHERE m."conversationId" = $1
         ORDER BY m."createdAt" ASC;
     `;

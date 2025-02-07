@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes';
 import postRoutes from './routes/postRoutes';
 import gameRoutes from './routes/gameRoutes';
+import messageRoutes from './routes/messageRoutes';
 import pool from './config/database';
 import { startPostCleanupJob, stopPostCleanupJob} from './services/postCleanupService';
 
@@ -25,6 +26,7 @@ app.use(cors(corsOptions));
 app.use('/auth', authRoutes);
 app.use('/posts', postRoutes);
 app.use('/games', gameRoutes);
+app.use('/messages', messageRoutes);
 
 const testDatabaseConnection = async () => {
     try {

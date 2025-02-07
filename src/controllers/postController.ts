@@ -288,7 +288,8 @@ export const getAcceptedPosts = async (req: Request, res: Response): Promise<voi
                     game: row.gameName,
                     description: row.description,
                     createdAt: row.createdAt,
-                    platforms: []
+                    platforms: [],
+                    conversationId: row.conversationId,
                 }
                 acc.push(post);
             }

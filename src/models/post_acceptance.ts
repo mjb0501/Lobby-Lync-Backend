@@ -40,13 +40,14 @@ export const createPostAccept = async (accept: PostAcceptance): Promise<any> => 
 export const readAcceptedPosts = async (userId: number): Promise<any> => {
   const query = `
     SELECT p.id AS "postId", g.name AS "gameName", p.description,
-      p."createdAt", pl.name AS "platformName", u.username AS "postCreator"
+      p."createdAt", pl.name AS "platformName", u.username AS "postCreator", c.id AS "conversationId"
     FROM post_acceptance pa
     LEFT JOIN post p ON pa."postId" = p.id
     LEFT JOIN game g ON p."gameId" = g.id
     LEFT JOIN post_platform pp ON p.id = pp."postId"
     LEFT JOIN platform pl ON pp."platformId" = pl.id
     LEFT JOIN "user" u ON p."userId" = u.id
+    LEFT JOIN conversation c ON p.id = c."postId" AND pa."userId" = c."acceptorId"
     WHERE pa."userId" = $1
   `;
 

@@ -9,6 +9,7 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
         }
 
         const { conversationId, content } = req.body;
+
         const senderId = req.userId;
         const message = await createMessage(conversationId, senderId, content);
 
@@ -26,11 +27,14 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
             return;
         }
 
-        const { conversationId } = req.body;
+        const { conversationId } = req.query;
 
-        const messages = await readMessages(conversationId);
+        if (!conversationId) {
+            res.status(400).json({ error: "Conversation ID is required" });
+            return;
+        }
 
-        console.log(messages);
+        const messages = await readMessages(Number(conversationId));
 
         res.status(201).json({ messages });
     } catch (error) {
