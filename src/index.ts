@@ -7,7 +7,10 @@ import postRoutes from './routes/postRoutes';
 import gameRoutes from './routes/gameRoutes';
 import messageRoutes from './routes/messageRoutes';
 import pool from './config/database';
+import http from 'http';
 import { startPostCleanupJob, stopPostCleanupJob} from './services/postCleanupService';
+import { setupWebSockets } from './websocket';
+import { WebSocketServer } from 'ws';
 
 dotenv.config();
 
@@ -19,6 +22,7 @@ const corsOptions = {
 }
 
 const app = express();
+const server = http.createServer(app);
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
@@ -58,6 +62,8 @@ const shutDownHandler = async (server: ReturnType<typeof app.listen>) => {
 
     const server = app.listen(process.env.PORT, () => {
         console.log(`Server is running on port ${process.env.PORT}`);
+
+        setupWebSockets(server);
     });
 
     startPostCleanupJob();

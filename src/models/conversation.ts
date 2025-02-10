@@ -23,3 +23,20 @@ export const createConversation = async (postId: number, creatorId: number, acce
         throw new Error('Failed to create conversation');
     }
 }
+
+export const deleteConversation = async (conversationId: number) => {
+    const query =`
+        DELETE FROM conversation
+        WHERE EXISTS (
+            SELECT 1
+            FROM conversation
+            WHERE id = $1
+        );
+    `;
+    try {
+        await pool.query(query, [conversationId]);
+    } catch (error) {
+        console.error('Error while deleting conversation:', error);
+        throw new Error('Failed to delete conversation');
+    }
+}

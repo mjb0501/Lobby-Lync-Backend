@@ -141,8 +141,6 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
 
         const post = await readUserCreatedPost(req.userId);
 
-        console.log(post);
-
         //runs if no posts were found
         if (post.length == 0) {
             res.status(200).json(null);
@@ -192,8 +190,6 @@ export const acceptPost = async (req: Request, res: Response): Promise<void> => 
 
         await createPostAccept({ postId, userId, description, platform, platformUsername });
 
-        console.log('creatorid', creatorId);
-
         await createConversation(postId, creatorId, userId);
 
         res.status(201).json({ message: 'Post accepted successfully' });
@@ -234,8 +230,6 @@ export const deletePostAcceptance = async (req: Request, res: Response): Promise
             res.status(400).json({ error: 'Missing acceptId'});
             return;
         }
-
-        console.log("delete hit");
         
         await deletePostAcceptanceById(req.userId, Number(postId));
 
