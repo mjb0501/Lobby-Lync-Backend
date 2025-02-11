@@ -41,6 +41,7 @@ export const setupWebSockets = (server: Server) => {
 
                     if (message.type === "subscribe" && typeof message.conversationId === "number") {
                         client.conversationIds.add(message.conversationId);
+                        console.log(client.conversationIds);
                         console.log(`User ${userId} subscribed to conversation ${message.conversationId}`);
                     }
 
@@ -58,7 +59,7 @@ export const setupWebSockets = (server: Server) => {
                             [message.conversationId, userId, message.content]
                         );
 
-                        console.log("clients:", clients);
+                        //console.log("clients:", clients);
 
                         const newMessage = result.rows[0];
 
@@ -86,8 +87,8 @@ export const setupWebSockets = (server: Server) => {
 
 
 export const notifyClients = (conversationId: number, newMessage: any) => {
-    clients.forEach(({ socket, conversationIds }) => {
-        if (conversationIds.has(conversationId)) {
+    clients.forEach(({ socket, userId, conversationIds }) => {
+        if (conversationIds.has(conversationId) && userId !== newMessage.senderId) {
             socket.send(JSON.stringify(newMessage));
         }
     });

@@ -194,9 +194,9 @@ export const acceptPost = async (req: Request, res: Response): Promise<void> => 
 
         await createPostAccept({ postId, userId, description, platform, platformUsername });
 
-        await createConversation(postId, creatorId, userId);
+        const response = await createConversation(postId, creatorId, userId);
 
-        res.status(201).json({ message: 'Post accepted successfully' });
+        res.status(201).json({ response });
     } catch (error) {
         console.error('Error accepting post:', error);
         res.status(500).json({ error: 'Error accepting post' });
