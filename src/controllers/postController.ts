@@ -98,7 +98,11 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
 
         const gameName = req.query.gameName as string;
 
-        posts = await readAllPosts(req.userId, gameName);
+        if (req.userId) {
+            posts = await readAllPosts(req.userId, gameName);
+        } else {
+            posts = await readAllPosts(undefined, gameName);
+        }
 
         const formattedPosts = posts.reduce((acc: any[], row: any) => {
             let post = acc.find(p => p.postId == row.postId);
@@ -266,7 +270,7 @@ export const rejectPostAcceptance = async (req: Request, res: Response): Promise
 export const getAcceptedPosts = async (req: Request, res: Response): Promise<void> => {
     try {
         if (!req.userId) {
-            res.status(400).json({ error: 'user is not authenticated'});
+            res.status(200).json({ message: 'User is not authenticated' });
             return;
         }
 

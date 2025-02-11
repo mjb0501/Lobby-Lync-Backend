@@ -48,7 +48,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 export const getUser = async (req: Request, res: Response): Promise<void> => {
     if (!req.userId) {
-        res.status(400).json({ error: 'User is not authenticated' });
+        res.status(200).json({ message: 'User is not authenticated' });
         return;
     }
     

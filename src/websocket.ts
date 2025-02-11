@@ -17,46 +17,6 @@ const clients: Client[] = [];
 export const setupWebSockets = (server: Server) => {
     const wss = new WebSocketServer({ server, path: '/ws' });
 
-    // server.on('upgrade', (req: IncomingMessage, socket: Socket, head: Buffer) => {
-    //     console.log(cookie);
-    //     if (!req.headers.cookie) {
-    //         console.log('No cookies found in headers.');
-    //         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-    //         socket.destroy();
-    //         return;
-    //     }
-
-    //     const cookies = cookie.parse(req.headers.cookie);
-    //     const token = cookies.accessToken;
-
-    //     if (!token) {
-    //         console.log("Websocket rejected: Missing token.");
-    //         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-    //         socket.destroy();
-    //         return;
-    //     }
-
-    //     try {
-    //         const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
-    //         req.userId = decoded.userId;
-
-    //         if (!wss.shouldHandle(req)) {
-    //             console.log("Websocket rejected: Connection not handled by WebSocketServer.");
-    //             socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
-    //             socket.destroy();
-    //             return;
-    //         }
-
-    //         wss.handleUpgrade(req, socket, head, (ws) => {
-    //             wss.emit('connection', ws, req);
-    //         });
-    //     } catch (error) {
-    //         console.error("WebSocket authentication failed:", error);
-    //         socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
-    //         socket.destroy();
-    //     }
-    // });
-
     wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
         try {
             if (!req.headers.cookie) throw new Error("No cookies found in headers.");

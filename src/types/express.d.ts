@@ -11,6 +11,6 @@ declare global {
 
 declare module 'http' {
   interface IncomingMessage {
-    userId: number;
+    userId: number | null;
   }
 }

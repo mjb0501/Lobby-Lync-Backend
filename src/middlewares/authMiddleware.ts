@@ -11,8 +11,8 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     const token = req.cookies.accessToken;
     if (!token) 
     {
-        res.status(401).json({error: 'Unauthorized', loggedIn: false });
-        return;
+        req.userId = null;
+        return next();
     }
 
     try 
