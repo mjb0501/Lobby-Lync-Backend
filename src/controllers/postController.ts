@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createPost, readAllPosts, readUserCreatedPost, deletePostById, updatePost } from '../models/post';
+import { createPost, readAllPosts, readUserCreatedPost, deletePostById, updatePost, getTotalPostsCount } from '../models/post';
 import { createPostPlatform, deletePostPlatforms } from '../models/post_platforms';
 import { getPlatformIdByName } from '../models/platform';
 import { createPostAccept, deletePostAcceptanceById, deletePostAcceptanceByUsername, readAcceptedPosts } from '../models/post_acceptance';
@@ -95,14 +95,17 @@ export const editPost = async (req: Request, res: Response): Promise<void> => {
 export const getPosts = async (req: Request, res: Response): Promise<void> => {
     try {
         let posts: any;
-
         const gameName = req.query.gameName as string;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = 10;
+        const offset = (page - 1) * limit;
 
-        if (req.userId) {
-            posts = await readAllPosts(req.userId, gameName);
-        } else {
-            posts = await readAllPosts(undefined, gameName);
+        if (!req.userId) {
+            res.status(400).json({ error: 'User is not authenticated' });
+            return;
         }
+
+        posts = await readAllPosts(req.userId, gameName, limit, offset);
 
         const formattedPosts = posts.reduce((acc: any[], row: any) => {
             let post = acc.find(p => p.postId == row.postId);
@@ -128,8 +131,19 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
             return acc;
         }, []);
 
+        const totalPosts = await getTotalPostsCount(req.userId, gameName);
+        const totalPages = Math.ceil(totalPosts / limit);
 
-        res.status(200).json(formattedPosts);
+        res.status(200).json({
+            posts: formattedPosts,
+            pagination: {
+                currentPage: page,
+                totalPages: totalPages,
+                totalPosts: totalPosts,
+                hasNextPage: page < totalPages,
+                hasPreviousPage: page > 1
+            }
+        });
     } catch (error) {
         console.error('Error fetching posts:', error);
         res.status(500).json({ error: 'Server error' });

@@ -46,7 +46,7 @@ export const updatePost = async (postId: number, userId: number, gameId: number,
   }
 }
 
-export const readAllPosts = async (userId?: number, gameName?: string): Promise<any[]> => {
+export const readAllPosts = async (userId: number, gameName?: string, limit?: number, offset?: number): Promise<any[]> => {
   const query = `
     SELECT p.id AS "postId", u.id AS "userId", u.username AS user, g.name AS "gameName", g.id AS "gameId", p.description, p."createdAt", pl.name AS "platformName"
     FROM post p
@@ -55,11 +55,13 @@ export const readAllPosts = async (userId?: number, gameName?: string): Promise<
     LEFT JOIN post_platform pp ON p.id = pp."postId"
     LEFT JOIN platform pl ON pp."platformId" = pl.id
     WHERE ($1::INT IS NULL OR p."userId" IS DISTINCT FROM $1)
-    AND ($2::TEXT IS NULL OR g.name = $2);
+    AND ($2::TEXT IS NULL OR g.name = $2)
+    ORDER BY p."createdAt" DESC
+    LIMIT $3 OFFSET $4;
   `;
 
   try {
-    const result = await pool.query(query, [userId || null, gameName || null]);
+    const result = await pool.query(query, [userId, gameName || null, limit, offset]);
     return result.rows;
   } catch (error) {
     console.error('Error fetching posts:', error);
@@ -118,5 +120,23 @@ export const deleteOldPosts = async (time: string): Promise<number> => {
   } catch (error) {
     console.error('Error deleting old posts:', error);
     throw new Error('Failed to delete old posts');
+  }
+}
+
+export const getTotalPostsCount = async (userId: number, gameName?: string): Promise<number> => {
+  const query = `
+    SELECT COUNT(*) AS "total"
+    FROM post p
+    LEFT JOIN game g ON p."gameId" = g.id
+    WHERE ($1::INT IS NULL OR p."userId" IS DISTINCT FROM $1)
+    AND ($2::TEXT IS NULL OR g.name = $2);
+  `;
+
+  try {
+    const result = await pool.query(query, [userId, gameName || null]);
+    return parseInt(result.rows[0].total, 10);
+  } catch (error) {
+    console.error('Error fetching total post count:', error);
+    throw new Error('Failed to fetch total post count');
   }
 }

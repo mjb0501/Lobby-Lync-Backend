@@ -6,7 +6,7 @@ import { acceptPostRateLimit, createPostRateLimit, editPostRateLimit, generalRat
 const router = Router();
 
 router.post('/createPost', createPostRateLimit, authenticate, insertPost);
-router.get('/getPosts', generalRateLimit, optionalAuthenticate, getPosts);
+router.get('/getPosts', generalRateLimit, authenticate, getPosts);
 router.post('/acceptPost', acceptPostRateLimit, authenticate, acceptPost);
 router.get('/getPostById', generalRateLimit, authenticate, getPostById);
 router.delete('/deletePost', generalRateLimit, authenticate, deletePost);
