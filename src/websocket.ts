@@ -4,11 +4,12 @@ import jwt from 'jsonwebtoken';
 import pool from './config/database';
 import { IncomingMessage, Server } from 'http';
 import { Socket } from "net";
+import { getUserByUuid } from './models/user';
 
 
 type Client = {
     socket: WebSocket;
-    userId: number;
+    userUuid: string;
     conversationIds: Set<number>;
 };
 
@@ -17,23 +18,27 @@ const clients: Client[] = [];
 export const setupWebSockets = (server: Server) => {
     const wss = new WebSocketServer({ server, path: '/ws' });
 
-    wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
+    wss.on("connection", async (ws: WebSocket, req: IncomingMessage) => {
         try {
-            if (!req.headers.cookie) throw new Error("No cookies found in headers.");
+            if (!req.headers.cookie) {
+                console.log(req.headers.cookie);
+                throw new Error("No cookies found in headers.")
+            };
 
             const cookies = cookie.parse(req.headers.cookie);
             const token = cookies.accessToken;
             if(!token) throw new Error("Missing token.");
 
-            const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
+            const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userUuid: string };
             
 
-            const userId = decoded.userId;
+            const userUuid = decoded.userUuid;
+            const user = await getUserByUuid(userUuid);
 
-            const client: Client = { socket: ws, userId, conversationIds: new Set() };
+            const client: Client = { socket: ws, userUuid, conversationIds: new Set() };
             clients.push(client);
 
-            console.log(`User ${userId} connected to WebSocket.`);
+            console.log(`User ${user[0].username} connected to WebSocket.`);
 
             ws.on("message", async (data) => {
                 try {
@@ -42,21 +47,21 @@ export const setupWebSockets = (server: Server) => {
                     if (message.type === "subscribe" && typeof message.conversationId === "number") {
                         client.conversationIds.add(message.conversationId);
                         console.log(client.conversationIds);
-                        console.log(`User ${userId} subscribed to conversation ${message.conversationId}`);
+                        console.log(`User ${user[0].username} subscribed to conversation ${message.conversationId}`);
                     }
 
                     if (message.type === "unsubscribe" && typeof message.conversationId === "number") {
                         client.conversationIds.delete(message.conversationId);
-                        console.log(`User ${userId} unsubscribed to conversation ${message.conversastionId}`);
+                        console.log(`User ${user[0].username} unsubscribed to conversation ${message.conversastionId}`);
                     }
 
                     if (message.type === "message" && typeof message.conversationId === "number" && typeof message.content === "string") {
-                        console.log(`Received message from user ${userId}: ${message.content}`);
+                        console.log(`Received message from user ${user[0].username}: ${message.content}`);
 
                         const result = await pool.query(
                             `INSERT INTO message ("conversationId", "senderId", content)
-                            VALUES ($1, $2, $3) RETURNING *`,
-                            [message.conversationId, userId, message.content]
+                            VALUES ($1, (SELECT id FROM "user" WHERE uuid = $2), $3) RETURNING *`,
+                            [message.conversationId, userUuid, message.content]
                         );
 
                         //console.log("clients:", clients);
@@ -72,7 +77,7 @@ export const setupWebSockets = (server: Server) => {
             });
 
             ws.on("close", () => {
-                console.log(`User ${userId} disconnected.`);
+                console.log(`User ${user[0].username} disconnected.`);
                 const index = clients.findIndex(client => client.socket === ws);
                 if (index !== -1) clients.splice(index, 1);
             });
@@ -87,8 +92,8 @@ export const setupWebSockets = (server: Server) => {
 
 
 export const notifyClients = (conversationId: number, newMessage: any) => {
-    clients.forEach(({ socket, userId, conversationIds }) => {
-        if (conversationIds.has(conversationId) && userId !== newMessage.senderId) {
+    clients.forEach(({ socket, conversationIds }) => {
+        if (conversationIds.has(conversationId)) {
             socket.send(JSON.stringify(newMessage));
         }
     });

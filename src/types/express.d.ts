@@ -4,13 +4,13 @@ import { IncomingMessage } from 'http';
 declare global {
   namespace Express {
      export interface Request {
-      userId: number;
+      userUuid: string;
     }
   }
 }
 
 declare module 'http' {
   interface IncomingMessage {
-    userId: number | null;
+    userUuid: string | null;
   }
 }

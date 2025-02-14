@@ -8,22 +8,22 @@ import { createConversation } from '../models/conversation';
 export const insertPost = async (req: Request, res: Response): Promise<void> => {
     try {
 
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(400).json({ error: 'User is not authenticated' });
             return;
         }
 
         //this portion of code checks and ensures that a user does not already have an uploaded post
-        const response = await readUserCreatedPost(req.userId);
+        const response = await readUserCreatedPost(req.userUuid);
         if (response.length > 0) {
             res.status(201).json({ message: 'Already have an uploaded post', postId: null});
             return;
         }
 
         const { platformIds, gameId, description } = req.body;
-        const userId = req.userId;
+        const userUuid = req.userUuid;
 
-        const result = await createPost({ userId, gameId, description });
+        const result = await createPost(userUuid, gameId, description);
 
         const postId = result.id;
         
@@ -51,21 +51,21 @@ export const insertPost = async (req: Request, res: Response): Promise<void> => 
 export const editPost = async (req: Request, res: Response): Promise<void> => {
     try {
 
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(400).json({ error: 'User is not authenticated' });
             return;
         }
 
         const { postId, platformIds, gameId, description } = req.body;
-        const userId = req.userId;
+        const userUuid = req.userUuid;
 
-        const existingPost = await readUserCreatedPost(userId);
+        const existingPost = await readUserCreatedPost(userUuid);
         if (!existingPost) {
             res.status(404).json({ error: 'Post not found' });
             return;
         }
 
-        await updatePost(postId, userId, gameId, description);
+        await updatePost(postId, userUuid, gameId, description);
 
 
         if (platformIds && Array.isArray(platformIds) && typeof postId == 'number') {
@@ -100,12 +100,12 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(400).json({ error: 'User is not authenticated' });
             return;
         }
 
-        posts = await readAllPosts(req.userId, gameName, limit, offset);
+        posts = await readAllPosts(req.userUuid, gameName, limit, offset);
 
         const formattedPosts = posts.reduce((acc: any[], row: any) => {
             let post = acc.find(p => p.postId == row.postId);
@@ -131,7 +131,7 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
             return acc;
         }, []);
 
-        const totalPosts = await getTotalPostsCount(req.userId, gameName);
+        const totalPosts = await getTotalPostsCount(req.userUuid, gameName);
         const totalPages = Math.ceil(totalPosts / limit);
 
         res.status(200).json({
@@ -152,12 +152,12 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
 
 export const getPostById = async (req: Request, res: Response): Promise<void> => {
     try {
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(400).json({ error: 'user is not authenticated'});
             return;
         }
 
-        const post = await readUserCreatedPost(req.userId);
+        const post = await readUserCreatedPost(req.userUuid);
 
         //runs if no posts were found
         if (post.length == 0) {
@@ -198,17 +198,17 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
 
 export const acceptPost = async (req: Request, res: Response): Promise<void> => {
     try {
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(400).json({ error: 'User is not authenticated' });
             return;
         }
 
         const { postId, description, platform, platformUsername, creatorId } = req.body;
-        const userId = req.userId;
+        const userUuid = req.userUuid;
 
-        await createPostAccept({ postId, userId, description, platform, platformUsername });
+        await createPostAccept(postId, userUuid, description, platform, platformUsername);
 
-        const response = await createConversation(postId, creatorId, userId);
+        const response = await createConversation(postId, creatorId, userUuid);
 
         res.status(201).json({ response });
     } catch (error) {
@@ -219,12 +219,12 @@ export const acceptPost = async (req: Request, res: Response): Promise<void> => 
 
 export const deletePost = async (req: Request, res: Response): Promise<void> => {
     try {
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(400).json({ error: 'user is not authenticated'});
             return;
         }
 
-        await deletePostById(req.userId);
+        await deletePostById(req.userUuid);
 
         res.status(200).json({ message: 'Post deleted successfully'});
     } catch (error) {
@@ -235,7 +235,7 @@ export const deletePost = async (req: Request, res: Response): Promise<void> => 
 
 export const deletePostAcceptance = async (req: Request, res: Response): Promise<void> => {
     try {
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(400).json({ error: 'user is not authenticated'});
             return;
         }
@@ -249,7 +249,7 @@ export const deletePostAcceptance = async (req: Request, res: Response): Promise
             return;
         }
         
-        await deletePostAcceptanceById(req.userId, Number(postId));
+        await deletePostAcceptanceById(req.userUuid, Number(postId));
 
         res.status(200).json({ message: 'Post acceptance deleted successfully'});
     } catch (error) {
@@ -260,7 +260,7 @@ export const deletePostAcceptance = async (req: Request, res: Response): Promise
 
 export const rejectPostAcceptance = async (req: Request, res: Response): Promise<void> => {
     try {
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(400).json({ error: 'user is not authenticated'});
             return;
         }
@@ -283,12 +283,12 @@ export const rejectPostAcceptance = async (req: Request, res: Response): Promise
 
 export const getAcceptedPosts = async (req: Request, res: Response): Promise<void> => {
     try {
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(200).json({ message: 'User is not authenticated' });
             return;
         }
 
-        const posts = await readAcceptedPosts(req.userId);
+        const posts = await readAcceptedPosts(req.userUuid);
 
         const formattedPosts = posts.reduce((acc: any[], row: any) => {
             let post = acc.find(p => p.postId == row.postId);

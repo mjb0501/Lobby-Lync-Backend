@@ -1,16 +1,19 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import { v4 as uuidv4} from 'uuid';
 import { generateToken } from "../services/authService";
-import { createUser, getUserByEmail, getUserById } from '../models/user';
+import { createUser, getUserByEmail, getUserByUuid } from '../models/user';
 import { updateUserPlatform } from "../models/user_platforms";
 
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
         const { username, email, password } = req.body;
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 12);
 
-        const user = await createUser({ username, email, password: hashedPassword });
+        const userUuid = uuidv4();
+
+        const user = await createUser({ username, email, password: hashedPassword, uuid: userUuid });
 
         res.status(201).json({ status: 'ok' });
     } catch (error) {
@@ -30,7 +33,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        const token = generateToken(user.id);
+        const token = generateToken(user.uuid);
 
         res.cookie("accessToken", token, {
             httpOnly: true,
@@ -47,13 +50,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const getUser = async (req: Request, res: Response): Promise<void> => {
-    if (!req.userId) {
+    if (!req.userUuid) {
         res.status(200).json({ message: 'User is not authenticated' });
         return;
     }
     
     try {
-        const userInfo = await getUserById(req.userId);
+        const userInfo = await getUserByUuid(req.userUuid);
 
         if (!userInfo) throw Error;
 
@@ -90,7 +93,7 @@ export const authLogout = (req: Request, res: Response): void => {
 }
 
 export const editPlatforms = async (req: Request, res: Response): Promise<void> => {
-    if(!req.userId) {
+    if(!req.userUuid) {
         res.status(400).json({ error: 'User is not authenticated' });
         return;
     }
@@ -98,8 +101,8 @@ export const editPlatforms = async (req: Request, res: Response): Promise<void> 
     try {
 
         const { Xbox, Playstation, Steam, Switch } = req.body
-        const userId = req.userId;
-        await updateUserPlatform({ userId, Xbox, Playstation, Steam, Switch })
+        const userUuid = req.userUuid;
+        await updateUserPlatform({ userUuid, Xbox, Playstation, Steam, Switch })
         res.status(201).json({ status: 'ok' });
     } catch (error) {
         console.log(error);

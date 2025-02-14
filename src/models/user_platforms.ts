@@ -8,7 +8,7 @@ export interface UserPlatform {
 }
 
 export const updateUserPlatform = async (platformData: any): Promise<void> => {
-  const { userId, ...platforms } = platformData;
+  const { userUuid, ...platforms } = platformData;
 
   //a map that maps each platform to its id in the database
   const platformMap: Record<string, number> = {
@@ -33,12 +33,12 @@ export const updateUserPlatform = async (platformData: any): Promise<void> => {
     return;
   }
 
-  const values: (number | string)[] = [userId];
+  const values: (number | string)[] = [userUuid];
   const valuePlaceholders: string[] = [];
   
   //Establishes the placeholders in the insert query
   platformEntriesToUpdate.forEach(([platformId, username], index) => {
-    valuePlaceholders.push(`($1, $${index * 2 + 2}, $${index * 2 + 3})`);
+    valuePlaceholders.push(`((SELECT id FROM "user" WHERE uuid = $1), $${index * 2 + 2}, $${index * 2 + 3})`);
     values.push(platformId, username);
   });
 
@@ -50,13 +50,15 @@ export const updateUserPlatform = async (platformData: any): Promise<void> => {
   `;
 
   const deleteQuery = platformEntriesToDelete.length > 0
-    ? `DELETE FROM user_platform WHERE "userId" = $1 AND "platformId" IN (${platformEntriesToDelete.join(', ')})`
+    ? `DELETE FROM user_platform
+       WHERE "userId" = (SELECT id FROM "user" WHERE uuid = $1)
+       AND "platformId" IN (${platformEntriesToDelete.join(', ')})`
     : '';
 
   try {
     // Execute delete query if applicable
     if (deleteQuery) {
-      await pool.query(deleteQuery, [userId]);
+      await pool.query(deleteQuery, [userUuid]);
     }
 
     //Execute insert/update query

@@ -5,15 +5,16 @@ export interface User {
     username: string;
     email: string;
     password: string;
+    uuid: string;
 }
 
 export const createUser = async (user: User): Promise<User> => {
     const query = `
-        INSERT INTO "user" (username, email, password)
-        VALUES ($1, $2, $3)
+        INSERT INTO "user" (username, email, password, uuid)
+        VALUES ($1, $2, $3, $4)
         RETURNING id, username, email;
     `;
-    const values = [user.username, user.email, user.password];
+    const values = [user.username, user.email, user.password, user.uuid];
     try {
         const result = await pool.query(query, values);
         return result.rows[0];
@@ -25,7 +26,7 @@ export const createUser = async (user: User): Promise<User> => {
 
 export const getUserByEmail = async (email: string): Promise<User | null> => {
     const query = `
-        SELECT id, username, email, password
+        SELECT id, username, email, password, uuid
         FROM "user"
         WHERE email = $1
     `;
@@ -38,16 +39,16 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
     }
 };
 
-export const getUserById = async (id: number): Promise<any[]> => {
+export const getUserByUuid = async (uuid: string): Promise<any[]> => {
     const query = `
         SELECT u.id, u.username, u.email, p.name AS "platformName", up."platformUsername"
         FROM "user" u
         LEFT JOIN user_platform up ON u.id = up."userId"
         LEFT JOIN platform p ON up."platformId" = p.id
-        WHERE u.id = $1
+        WHERE u.uuid = $1
     `;
     try {
-        const result = await pool.query(query, [id]);
+        const result = await pool.query(query, [uuid]);
         return result.rows || null;
     } catch (error) {
         console.error('Error fetching user by id:', error);

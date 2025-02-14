@@ -8,13 +8,13 @@ export interface Post {
   createdAt?: Date;
 }
 
-export const createPost = async (post: Post): Promise<Post> => {
+export const createPost = async (userUuid: string, gameId: number, description: string): Promise<Post> => {
   const query = `
     INSERT INTO post ("userId", "gameId", description, "createdAt")
-    VALUES ($1, $2, $3, NOW())
+    VALUES ((SELECT id FROM "user" WHERE uuid = $1), $2, $3, NOW())
     RETURNING id, "userId", "gameId", description, "createdAt";
   `;
-  const values = [post.userId, post.gameId, post.description];
+  const values = [userUuid, gameId, description];
   try {
     const result = await pool.query(query, values);
     return result.rows[0];
@@ -25,7 +25,7 @@ export const createPost = async (post: Post): Promise<Post> => {
   
 };
 
-export const updatePost = async (postId: number, userId: number, gameId: number, description: string) => {
+export const updatePost = async (postId: number, userUuid: string, gameId: number, description: string) => {
   const query = `
   UPDATE post
   SET
@@ -33,10 +33,10 @@ export const updatePost = async (postId: number, userId: number, gameId: number,
     description = $2,
     "createdAt" = NOW()
   WHERE
-    id = $3 AND "userId" = $4;
+    id = $3 AND "userId" = (SELECT id FROM "user" WHERE uuid = $4);
   `;
   
-  const values = [gameId, description, postId, userId];
+  const values = [gameId, description, postId, userUuid];
   try {
     const result = await pool.query(query, values);
     return result.rows[0];
@@ -46,7 +46,7 @@ export const updatePost = async (postId: number, userId: number, gameId: number,
   }
 }
 
-export const readAllPosts = async (userId: number, gameName?: string, limit?: number, offset?: number): Promise<any[]> => {
+export const readAllPosts = async (userUuid: string, gameName?: string, limit?: number, offset?: number): Promise<any[]> => {
   const query = `
     SELECT p.id AS "postId", u.id AS "userId", u.username AS user, g.name AS "gameName", g.id AS "gameId", p.description, p."createdAt", pl.name AS "platformName"
     FROM post p
@@ -54,14 +54,15 @@ export const readAllPosts = async (userId: number, gameName?: string, limit?: nu
     LEFT JOIN game g ON p."gameId" = g.id
     LEFT JOIN post_platform pp ON p.id = pp."postId"
     LEFT JOIN platform pl ON pp."platformId" = pl.id
-    WHERE ($1::INT IS NULL OR p."userId" IS DISTINCT FROM $1)
+    WHERE ((SELECT id FROM "user" WHERE uuid = $1)::INT IS NULL 
+    OR p."userId" IS DISTINCT FROM (SELECT id FROM "user" WHERE uuid = $1))
     AND ($2::TEXT IS NULL OR g.name = $2)
     ORDER BY p."createdAt" DESC
     LIMIT $3 OFFSET $4;
   `;
 
   try {
-    const result = await pool.query(query, [userId, gameName || null, limit, offset]);
+    const result = await pool.query(query, [userUuid, gameName || null, limit, offset]);
     return result.rows;
   } catch (error) {
     console.error('Error fetching posts:', error);
@@ -69,7 +70,7 @@ export const readAllPosts = async (userId: number, gameName?: string, limit?: nu
   }
 }
 
-export const readUserCreatedPost = async (userId: number): Promise<any> => {
+export const readUserCreatedPost = async (userUuid: string): Promise<any> => {
   const query = `
     SELECT p.id AS "postId", g.name AS "gameName", g.id AS "gameId", 
 	    p.description, p."createdAt", pl.name AS "platformName", u.username, 
@@ -82,11 +83,11 @@ export const readUserCreatedPost = async (userId: number): Promise<any> => {
     LEFT JOIN post_acceptance pa ON p."id" = pa."postId"
     LEFT JOIN "user" u ON pa."userId" = u.id
     LEFT JOIN conversation c ON u.id = c."acceptorId" AND p.id = c."postId"
-    WHERE p."userId" = $1;
+    WHERE p."userId" = (SELECT id FROM "user" where uuid = $1);
   `;
 
   try {
-    const result = await pool.query(query, [userId]);
+    const result = await pool.query(query, [userUuid]);
     return result.rows.length ? result.rows : [];
   } catch (error) {
     console.error('Error fetching post:', error);
@@ -94,14 +95,14 @@ export const readUserCreatedPost = async (userId: number): Promise<any> => {
   }
 }
 
-export const deletePostById = async (userId: number): Promise<any> => {
+export const deletePostById = async (userUuid: string): Promise<any> => {
   const query = `
     DELETE FROM post
-    WHERE post."userId" = $1;
+    WHERE post."userId" = (SELECT id FROM "user" WHERE uuid = $1);
   `;
 
   try {
-    await pool.query(query, [userId]);
+    await pool.query(query, [userUuid]);
   } catch (error) {
     console.error('Error deleting post by id:', error);
     throw new Error('Failed to delete post by id');
@@ -123,17 +124,18 @@ export const deleteOldPosts = async (time: string): Promise<number> => {
   }
 }
 
-export const getTotalPostsCount = async (userId: number, gameName?: string): Promise<number> => {
+export const getTotalPostsCount = async (userUuid: string, gameName?: string): Promise<number> => {
   const query = `
     SELECT COUNT(*) AS "total"
     FROM post p
     LEFT JOIN game g ON p."gameId" = g.id
-    WHERE ($1::INT IS NULL OR p."userId" IS DISTINCT FROM $1)
+    WHERE ((SELECT id FROM "user" WHERE uuid = $1)::INT IS NULL 
+    OR p."userId" IS DISTINCT FROM (SELECT id FROM "user" WHERE uuid = $1))
     AND ($2::TEXT IS NULL OR g.name = $2);
   `;
 
   try {
-    const result = await pool.query(query, [userId, gameName || null]);
+    const result = await pool.query(query, [userUuid, gameName || null]);
     return parseInt(result.rows[0].total, 10);
   } catch (error) {
     console.error('Error fetching total post count:', error);

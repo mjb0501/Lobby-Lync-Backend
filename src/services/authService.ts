@@ -1,12 +1,12 @@
 import jwt from 'jsonwebtoken';
 
-export const generateToken = (userId: number): string => {
+export const generateToken = (userUuid: string): string => {
 
     if (!process.env.JWT_SECRET) {
         throw Error("JWT SECRET not defined.");
     }
 
-    const payload = { userId };
+    const payload = { userUuid };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2h' });
 

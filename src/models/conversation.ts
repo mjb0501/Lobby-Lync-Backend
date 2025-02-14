@@ -8,10 +8,10 @@ export interface Conversation {
   createdAt?: Date;
 }
 
-export const createConversation = async (postId: number, creatorId: number, acceptorId: number) => {
+export const createConversation = async (postId: number, creatorId: number, acceptorId: string) => {
     const query = `
         INSERT INTO conversation ("postId", "creatorId", "acceptorId")
-        VALUES ($1, $2, $3)
+        VALUES ($1, $2, (SELECT id FROM "user" WHERE uuid = $3))
         RETURNING id;
     `;
     try {

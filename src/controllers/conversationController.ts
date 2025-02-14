@@ -4,14 +4,14 @@ import { deleteConversation } from '../models/conversation';
 
 export const sendMessage = async (req: Request, res: Response): Promise<void> => {
     try {
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(400).json({ error: 'User is not authenticated' });
             return;
         }
 
         const { conversationId, content } = req.body;
 
-        const senderId = req.userId;
+        const senderId = req.userUuid;
         const message = await createMessage(conversationId, senderId, content);
 
         res.status(201).json({ message });
@@ -23,7 +23,7 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
 
 export const getMessages = async (req: Request, res: Response): Promise<void> => {
     try {
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(400).json({ error: 'User is not authenticated' });
             return;
         }
@@ -46,7 +46,7 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
 
 export const removeConversation = async (req: Request, res: Response): Promise<void> => {
     try {
-        if (!req.userId) {
+        if (!req.userUuid) {
             res.status(400).json({ error: 'user is not authenticated'});
             console.log('test1');
             return;

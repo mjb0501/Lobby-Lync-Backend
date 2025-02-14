@@ -11,17 +11,17 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     const token = req.cookies.accessToken;
     if (!token) 
     {
-        req.userId = null;
+        req.userUuid = null;
         return next();
     }
 
     try 
     {
         //validates the token with the secret key
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userUuid: string };
 
         //attaches the decoded token to the req object as a user cast as any to pass typescript check
-        req.userId = decoded.userId;
+        req.userUuid = decoded.userUuid;
         
         //indicates a succesful login
         //res.locals.loggedIn = true;
@@ -43,10 +43,10 @@ export const optionalAuthenticate = (req: Request, res: Response, next: NextFunc
     }
 
     try {
-        const decoded = jwt.decode(token) as { userId: number } | null;
+        const decoded = jwt.decode(token) as { userUuid: string } | null;
 
-        if (decoded && decoded.userId) {
-            req.userId = decoded.userId;
+        if (decoded && decoded.userUuid) {
+            req.userUuid = decoded.userUuid;
         }
     } catch (error) {
         console.error('Invalid token', error);
