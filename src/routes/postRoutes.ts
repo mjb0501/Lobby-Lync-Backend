@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { insertPost, getPosts, acceptPost, getPostById, deletePost, getAcceptedPosts, deletePostAcceptance, editPost, rejectPostAcceptance } from '../controllers/postController';
-import { authenticate, optionalAuthenticate } from '../middlewares/authMiddleware';
+import { authenticate } from '../middlewares/authMiddleware';
 import { acceptPostRateLimit, createPostRateLimit, editPostRateLimit, generalRateLimit } from '../middlewares/rateLimiter';
 
 const router = Router();

@@ -18,7 +18,12 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     try 
     {
         //validates the token with the secret key
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userUuid: string };
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userUuid: string, exp: number };
+        
+        if (Date.now() >= decoded?.exp * 1000) {
+            req.userUuid = null;
+            return next();
+        }
 
         //attaches the decoded token to the req object as a user cast as any to pass typescript check
         req.userUuid = decoded.userUuid;
@@ -34,23 +39,3 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
         res.status(401).json({ error: 'Invalid token' });
     }
 }
-
-export const optionalAuthenticate = (req: Request, res: Response, next: NextFunction): void => {
-    const token = req.cookies?.accessToken;
-
-    if (!token) {
-        return next();
-    }
-
-    try {
-        const decoded = jwt.decode(token) as { userUuid: string } | null;
-
-        if (decoded && decoded.userUuid) {
-            req.userUuid = decoded.userUuid;
-        }
-    } catch (error) {
-        console.error('Invalid token', error);
-    }
-
-    next();
-};

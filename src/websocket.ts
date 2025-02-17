@@ -60,7 +60,8 @@ export const setupWebSockets = (server: Server) => {
 
                         const result = await pool.query(
                             `INSERT INTO message ("conversationId", "senderId", content)
-                            VALUES ($1, (SELECT id FROM "user" WHERE uuid = $2), $3) RETURNING *`,
+                            VALUES ($1, (SELECT id FROM "user" WHERE uuid = $2), $3) RETURNING *,
+                                (SELECT "creatorId" FROM conversation WHERE id = $1);`,
                             [message.conversationId, userUuid, message.content]
                         );
 
