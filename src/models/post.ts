@@ -46,7 +46,7 @@ export const updatePost = async (postId: number, userUuid: string, gameId: numbe
   }
 }
 
-export const readAllPosts = async (userUuid: string, gameName?: string, limit?: number, offset?: number): Promise<any[]> => {
+export const readAllPosts = async (userUuid: string, gameName?: string, filteredPlatform?: string, limit?: number, offset?: number): Promise<any[]> => {
   const query = `
     SELECT p.id AS "postId", u.id AS "userId", u.username AS user, g.name AS "gameName", g.id AS "gameId", p.description, p."createdAt", pl.name AS "platformName"
     FROM post p
@@ -57,12 +57,17 @@ export const readAllPosts = async (userUuid: string, gameName?: string, limit?: 
     WHERE ((SELECT id FROM "user" WHERE uuid = $1)::INT IS NULL 
     OR p."userId" IS DISTINCT FROM (SELECT id FROM "user" WHERE uuid = $1))
     AND ($2::TEXT IS NULL OR g.name = $2)
+    AND ($3::TEXT IS NULL OR EXISTS (
+      SELECT 1 FROM post_platform pp2
+      JOIN platform pl2 ON pp2."platformId" = pl2.id
+      WHERE pp2."postId" = p.id AND pl2.name = $3
+    ))
     ORDER BY p."createdAt" DESC
-    LIMIT $3 OFFSET $4;
+    LIMIT $4 OFFSET $5;
   `;
 
   try {
-    const result = await pool.query(query, [userUuid, gameName || null, limit, offset]);
+    const result = await pool.query(query, [userUuid, gameName || null, filteredPlatform || null, limit, offset]);
     return result.rows;
   } catch (error) {
     console.error('Error fetching posts:', error);

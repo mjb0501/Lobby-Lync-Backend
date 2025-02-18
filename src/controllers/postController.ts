@@ -96,6 +96,8 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
     try {
         let posts: any;
         const gameName = req.query.gameName as string;
+        const filteredPlatform = req.query.filteredPlatform as string;
+        console.log(filteredPlatform)
         const page = parseInt(req.query.page as string) || 1;
         const limit = 10;
         const offset = (page - 1) * limit;
@@ -105,7 +107,7 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        posts = await readAllPosts(req.userUuid, gameName, limit, offset);
+        posts = await readAllPosts(req.userUuid, gameName, filteredPlatform, limit, offset);
 
         const formattedPosts = posts.reduce((acc: any[], row: any) => {
             let post = acc.find(p => p.postId == row.postId);
