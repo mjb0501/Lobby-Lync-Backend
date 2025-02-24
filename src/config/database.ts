@@ -1,10 +1,13 @@
 require('dotenv').config();
 import { Pool } from 'pg';
 
+const isProduction = process.env.NODE_ENV === 'production';
+//console.log(isProduction)
+
 const pool = new Pool({
     user: process.env.POSTGRES_USER,
     password: process.env.POSTGRES_PASSWORD,
-    host: process.env.DB_HOST,
+    host: isProduction ? 'db' : 'localhost',
     port: Number(process.env.DB_PORT),
     database: process.env.NODE_ENV === 'test' ? 'testDB' : process.env.POSTGRES_DB,
     max: 10,

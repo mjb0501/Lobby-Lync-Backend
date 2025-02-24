@@ -16,7 +16,23 @@ type Client = {
 const clients: Client[] = [];
 
 export const setupWebSockets = (server: Server) => {
-    const wss = new WebSocketServer({ server, path: '/ws' });
+    const wss = new WebSocketServer({
+        server, 
+        path: '/ws',
+        verifyClient: (info, done) => {
+            const origin = info.origin;
+
+            if (process.env.NODE_ENV === 'production') {
+                if (origin === process.env.FRONTEND_URL) {
+                    done(true);
+                } else {
+                    done(false);
+                }
+            } else {
+                done(true);
+            }
+        }
+    });
 
     wss.on("connection", async (ws: WebSocket, req: IncomingMessage) => {
         try {

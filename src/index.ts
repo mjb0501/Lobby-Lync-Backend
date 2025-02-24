@@ -16,10 +16,11 @@ dotenv.config();
 
 const corsOptions = {
     //This specifies for cors that the calls will come from localhost...
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173', 'http://142.93.195.49'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
 }
+console.log(process.env.NODE_ENV);
 
 const app = express();
 const server = http.createServer(app);
