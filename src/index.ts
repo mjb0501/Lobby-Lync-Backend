@@ -16,7 +16,7 @@ dotenv.config();
 
 const corsOptions = {
     //This specifies for cors that the calls will come from localhost...
-    origin: ['http://localhost:5173', 'http://142.93.195.49'],
+    origin: ['http://localhost:5173', 'http://lobbylync.com'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
 }
