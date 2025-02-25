@@ -28,10 +28,10 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
 
-app.use('/auth', authRoutes);
-app.use('/posts', postRoutes);
-app.use('/games', gameRoutes);
-app.use('/messages', messageRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/games', gameRoutes);
+app.use('/api/messages', messageRoutes);
 
 const testDatabaseConnection = async () => {
     try {
