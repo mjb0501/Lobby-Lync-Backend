@@ -24,6 +24,7 @@ console.log(process.env.NODE_ENV);
 
 const app = express();
 const server = http.createServer(app);
+app.set('trust proxy', 1);
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
@@ -32,6 +33,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/messages', messageRoutes);
+
+
 
 const testDatabaseConnection = async () => {
     try {
@@ -61,7 +64,7 @@ const shutDownHandler = async (server: ReturnType<typeof app.listen>) => {
 (async () => {
     await testDatabaseConnection();
 
-    const server = app.listen(process.env.PORT, () => {
+    const server = app.listen(process.env.PORT || 3001, () => {
         console.log(`Server is running on port ${process.env.PORT}`);
 
         setupWebSockets(server);

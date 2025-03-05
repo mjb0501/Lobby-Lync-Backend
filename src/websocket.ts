@@ -64,6 +64,35 @@ export const setupWebSockets = (server: Server) => {
                         client.conversationIds.add(message.conversationId);
                         console.log(client.conversationIds);
                         console.log(`User ${user[0].username} subscribed to conversation ${message.conversationId}`);
+
+                        const result = await pool.query(
+                            `SELECT "creatorId", "acceptorId" FROM conversation WHERE id = $1`,
+                            [message.conversationId]
+                        );
+
+                        if (result.rows.length > 0) {
+                            const { creatorId, acceptorId } = result.rows[0];
+
+                            const otherUserId = user[0].id === creatorId ? acceptorId : creatorId;
+                            const otherUser = await pool.query(`SELECT uuid FROM "user" WHERE id = $1`, [otherUserId]);
+
+                            if (otherUser.rows.length > 0) {
+                                const otherUserUuid = otherUser.rows[0].uuid;
+
+                                const otherClient = clients.find(c => c.userUuid === otherUserUuid);
+
+                                if (otherClient) {
+                                    otherClient.conversationIds.add(message.conversationId);
+                                    
+                                    otherClient.socket.send(JSON.stringify({
+                                        type: "refresh",
+                                        conversationId: message.conversationId
+                                    }));
+
+                                    console.log(`User ${otherUserUuid} auto-subscribed to conversation ${message.conversationId}`);
+                                }
+                            }
+                        }
                     }
 
                     if (message.type === "unsubscribe" && typeof message.conversationId === "number") {
